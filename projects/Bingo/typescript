@@ -1,0 +1,97 @@
+Script started on Fri 09 Feb 2024 09:11:46 PM EST
+]0;hirani_zn@cobra:~/Prog1[?1034h[hirani_zn@cobra Prog1]$ javac Bingo.java
+]0;hirani_zn@cobra:~/Prog1[hirani_zn@cobra Prog1]$ java Bingo
+
+	Player 1 Card: 
+	B	I	N	G	O
+       -----------------------------------	
+	3	30	45	56	62	
+	6	27	33	55	71	
+	2	21	41	46	63	
+	11	24	35	49	65	
+	8	18	44	58	66	
+
+	Player 2 Card: 
+	B	I	N	G	O
+       -----------------------------------	
+	1	28	32	51	64	
+	9	16	36	50	70	
+	7	22	31	52	61	
+	13	20	39	47	72	
+	15	25	43	48	69	
+
+	BINGO NUMBERS PICKED AT RANDOM FROM BIN : 
+
+	73 	43 	56 	37 	58 	1  	63 	24 	57 	47 
+	72 	21 	40 	11 	62 	7  	18 	46 	74 	32 
+	54 	17 	22 	39 	10 	35 	5  	49 	15 	27 
+	65 
+
+	Player 1 WINS WITH A HORIZONTAL BINGO AFTER 31 PICKS!
+	B	I	N	G	O
+       -----------------------------------	
+	3	30	45	X	X	
+	6	X	33	55	71	
+	2	X	41	X	X	
+	X	X	X	X	X	
+	8	X	44	X	66	
+
+	B	I	N	G	O
+       -----------------------------------	
+	X	28	X	51	64	
+	9	16	36	50	70	
+	X	X	31	52	61	
+	13	20	X	X	X	
+	X	25	X	48	69	
+
+
+]0;hirani_zn@cobra:~/Prog1[hirani_zn@cobra Prog1]$ java Bingo
+
+	Player 1 Card: 
+	B	I	N	G	O
+       -----------------------------------	
+	3	30	45	56	62	
+	6	27	33	55	71	
+	2	21	41	46	63	
+	11	24	35	49	65	
+	8	18	44	58	66	
+
+	Player 2 Card: 
+	B	I	N	G	O
+       -----------------------------------	
+	1	28	32	51	64	
+	9	16	36	50	70	
+	7	22	31	52	61	
+	13	20	39	47	72	
+	15	25	43	48	69	
+
+	BINGO NUMBERS PICKED AT RANDOM FROM BIN : 
+
+	59 	74 	14 	30 	8  	42 	39 	32 	33 	49 
+	50 	75 	62 	1  	41 	56 	26 	20 	29 	37 
+	9  	54 	68 	18 	43 	17 	65 	27 	63 	69 
+	22 	67 	3  	60 	70 	76 	24 	40 	13 	11 
+	73 	51 	46 	71 	57 	35 
+
+	Player 1 WINS WITH A HORIZONTAL BINGO AFTER 46 PICKS!
+	B	I	N	G	O
+       -----------------------------------	
+	X	X	45	X	X	
+	6	X	X	55	X	
+	2	21	X	X	X	
+	X	X	X	X	X	
+	X	X	44	58	66	
+
+	B	I	N	G	O
+       -----------------------------------	
+	X	28	X	X	64	
+	X	16	36	X	X	
+	7	X	31	52	61	
+	X	X	X	47	72	
+	15	25	X	48	X	
+
+
+]0;hirani_zn@cobra:~/Prog1[hirani_zn@cobra Prog1]$ exit
+exit
+
+Script done on Fri 09 Feb 2024 09:12:36 PM EST

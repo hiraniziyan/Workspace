@@ -1,0 +1,25 @@
+Create a BINGO program which:
+
+1) takes in values from a file to make BINGO card
+	- file is in row major order with 25 rows and 2 integers on each row (1 per person)
+	-for loop to read file numers into 2-D array
+
+2) generates random numbers as drawings
+	- Math.random()*75 + 1
+
+3) checks for a duplicate pick
+	-BitSet with 75 elements, so if a number is picked, the BitSet of the number will be changed to true
+
+4) marks of picked numbers
+	-check the location of the random number in array and set to 0, and when printing card, change 0 to "X"
+
+5) checks for win
+	- do for loops for each column, row, and diagonal, and if the sum of the elements is 0, declare win and the type
+	- checks who won
+
+OUTPUT:
+
+1) Prints each players bingo card
+2) Prints the generated random numbers
+3) Prints who won, what kind of win, and in how many turns
+4) Prints the players cards
