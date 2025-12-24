@@ -1,0 +1,83 @@
+[gd_scene load_steps=5 format=3 uid="uid://da4xp8j30hdd2"]
+
+[ext_resource type="Script" uid="uid://yn6uwkkoal3f" path="res://Shop/Scenes/shop_item.gd" id="1_qcmrj"]
+[ext_resource type="Texture2D" uid="uid://crxsa4hrektgi" path="res://icon.svg" id="2_w788f"]
+[ext_resource type="Texture2D" uid="uid://b4lo57emg3105" path="res://Shop/Assets/Placeholders/P X Button.png" id="3_6vuda"]
+[ext_resource type="Texture2D" uid="uid://bmp8mrjpap20x" path="res://Shop/Assets/Placeholders/Buy Button PH.png" id="3_hmaq3"]
+
+[node name="ShopItem" type="Button" node_paths=PackedStringArray("toolTipIcon", "toolDescNode") groups=["ShopItems"]]
+custom_minimum_size = Vector2(32, 32)
+offset_left = -16.0
+offset_top = -16.0
+offset_right = 16.0
+offset_bottom = 16.0
+size_flags_horizontal = 0
+size_flags_vertical = 0
+icon = ExtResource("2_w788f")
+icon_alignment = 1
+expand_icon = true
+script = ExtResource("1_qcmrj")
+toolTipIcon = NodePath("CanvasLayer/CenterContainer/ToolTip/VSplitContainer/ToolTipIcon")
+toolDescNode = NodePath("CanvasLayer/CenterContainer/ToolTip/VSplitContainer/MarginContainer/Description")
+shop_icon = ExtResource("2_w788f")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+visible = false
+
+[node name="CenterContainer" type="CenterContainer" parent="CanvasLayer"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -70.0
+offset_top = -70.0
+offset_right = 70.0
+offset_bottom = 70.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ToolTip" type="PanelContainer" parent="CanvasLayer/CenterContainer"]
+custom_minimum_size = Vector2(140, 140)
+layout_mode = 2
+
+[node name="VSplitContainer" type="VBoxContainer" parent="CanvasLayer/CenterContainer/ToolTip"]
+layout_mode = 2
+
+[node name="ToolTipIcon" type="TextureRect" parent="CanvasLayer/CenterContainer/ToolTip/VSplitContainer"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/CenterContainer/ToolTip/VSplitContainer"]
+custom_minimum_size = Vector2(0, 75)
+layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="Description" type="RichTextLabel" parent="CanvasLayer/CenterContainer/ToolTip/VSplitContainer/MarginContainer"]
+layout_mode = 2
+text = "Test Text"
+
+[node name="BuyEqButton" type="Button" parent="CanvasLayer/CenterContainer/ToolTip/VSplitContainer"]
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+icon = ExtResource("3_hmaq3")
+
+[node name="CloseButton" type="Button" parent="CanvasLayer/CenterContainer/ToolTip"]
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 0
+icon = ExtResource("3_6vuda")
+
+[connection signal="button_down" from="." to="." method="_on_button_down"]
+[connection signal="button_down" from="CanvasLayer/CenterContainer/ToolTip/VSplitContainer/BuyEqButton" to="." method="_on_buy_eq_button_button_down"]
+[connection signal="button_down" from="CanvasLayer/CenterContainer/ToolTip/CloseButton" to="." method="_on_close_button_button_down"]

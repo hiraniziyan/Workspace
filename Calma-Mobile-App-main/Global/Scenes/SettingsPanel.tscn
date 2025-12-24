@@ -1,0 +1,114 @@
+[gd_scene load_steps=7 format=3 uid="uid://bd135ftsf43qd"]
+
+[ext_resource type="Script" uid="uid://c85jauuwennna" path="res://Global/Scripts/settings_panel.gd" id="1_5xc6n"]
+[ext_resource type="Texture2D" uid="uid://c5g5yp4pgvg6l" path="res://Minigames/MiniGamesTab/Sprites/coin.png" id="2_4q6vo"]
+[ext_resource type="Texture2D" uid="uid://cnb11istk6uu4" path="res://Shop/ProfileSprites/Bear.png" id="3_k3o6s"]
+[ext_resource type="Script" uid="uid://xij7u0xkrlxn" path="res://Global/Scripts/coin_connection.gd" id="3_yoica"]
+[ext_resource type="Script" uid="uid://dm0t5go467vet" path="res://Global/Scripts/avatar_connection.gd" id="4_4q6vo"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_k3o6s"]
+bg_color = Color(0, 0.6, 0.84705883, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[node name="SettingsPanel" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_5xc6n")
+
+[node name="TopBar" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 26.0
+grow_horizontal = 2
+
+[node name="Control2" type="Control" parent="TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="TopBar"]
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="TopBar/HBoxContainer"]
+layout_mode = 2
+texture = ExtResource("2_4q6vo")
+expand_mode = 3
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="TopBar/HBoxContainer"]
+layout_mode = 2
+text = "0"
+script = ExtResource("3_yoica")
+
+[node name="Control" type="Control" parent="TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 3.38
+
+[node name="SettingsButton" type="Button" parent="TopBar"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+icon = ExtResource("3_k3o6s")
+flat = true
+icon_alignment = 1
+expand_icon = true
+script = ExtResource("4_4q6vo")
+
+[node name="ImportPanel" type="Panel" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -73.0
+offset_top = -71.0
+offset_right = 73.0
+offset_bottom = 71.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_k3o6s")
+
+[node name="MarginContainer" type="MarginContainer" parent="ImportPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 2
+theme_override_constants/margin_top = 1
+theme_override_constants/margin_right = 1
+theme_override_constants/margin_bottom = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ImportPanel/MarginContainer"]
+layout_mode = 2
+
+[node name="ScheduleEntryTextField" type="TextEdit" parent="ImportPanel/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+placeholder_text = "Paste schedule from mymercer here"
+wrap_mode = 1
+caret_blink = true
+
+[node name="ImportButton" type="Button" parent="ImportPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+text = "IMPORT"
+
+[connection signal="toggled" from="TopBar/SettingsButton" to="." method="_on_settings_button_toggled"]
+[connection signal="pressed" from="ImportPanel/MarginContainer/VBoxContainer/ImportButton" to="." method="_on_import_button_pressed"]

@@ -1,0 +1,59 @@
+[gd_scene load_steps=4 format=3 uid="uid://dwepwyaxde1qb"]
+
+[ext_resource type="Script" uid="uid://mjx210peysve" path="res://Calendar/Scripts/ScheduleScene.gd" id="1_qlocw"]
+[ext_resource type="PackedScene" uid="uid://bkb4p0ex6mwml" path="res://Calendar/Scenes/course_row.tscn" id="2_n54f4"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_n54f4"]
+bg_color = Color(0.43137255, 0.7882353, 1, 1)
+
+[node name="Control" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_qlocw")
+COURSE_ROW_SCENE = ExtResource("2_n54f4")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_n54f4")
+
+[node name="WarningLabel" type="Label" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "No courses currently imported.
+Press the avatar icon on the top right to import your course schedule."
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 44.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DateLabel" type="Label" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+horizontal_alignment = 1
+
+[node name="ClassList" type="VBoxContainer" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2

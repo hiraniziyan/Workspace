@@ -1,0 +1,45 @@
+[gd_scene load_steps=3 format=3 uid="uid://bkb4p0ex6mwml"]
+
+[ext_resource type="Script" uid="uid://by6y81135poog" path="res://Calendar/Scripts/course_row.gd" id="1_do3bx"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_do3bx"]
+bg_color = Color(0, 0.6, 0.84705883, 1)
+
+[node name="CourseRow" type="Control"]
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -366.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_do3bx")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_do3bx")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CheckBox" type="CheckBox" parent="HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "COM 420"
+
+[connection signal="toggled" from="HBoxContainer/CheckBox" to="." method="_on_check_box_toggled"]

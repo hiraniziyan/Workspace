@@ -1,0 +1,128 @@
+[gd_scene load_steps=6 format=3 uid="uid://c3b8tc7g2ubuk"]
+
+[ext_resource type="PackedScene" uid="uid://da4xp8j30hdd2" path="res://Shop/Scenes/shop_item.tscn" id="1_71320"]
+[ext_resource type="Texture2D" uid="uid://cnb11istk6uu4" path="res://Shop/ProfileSprites/Bear.png" id="2_l67rk"]
+[ext_resource type="Texture2D" uid="uid://cxgxdeb8mihwx" path="res://Shop/ProfileSprites/BullDog.png" id="3_rwlp8"]
+[ext_resource type="Texture2D" uid="uid://cx80hi0wl14ce" path="res://Shop/ProfileSprites/OWL.png" id="4_jwtvb"]
+[ext_resource type="Texture2D" uid="uid://b50nma85q05vm" path="res://Shop/ProfileSprites/YellowJacket.png" id="5_yedjq"]
+
+[node name="Shop" type="Node2D"]
+
+[node name="ColorRect" type="ColorRect" parent="."]
+offset_right = 180.0
+offset_bottom = 400.0
+color = Color(0.43137255, 0.7882353, 1, 1)
+
+[node name="ColorRect2" type="ColorRect" parent="."]
+offset_right = 180.0
+offset_bottom = 34.0
+color = Color(1.8289685e-06, 0.6000861, 0.8474111, 1)
+
+[node name="ColorRect3" type="ColorRect" parent="."]
+offset_top = 79.0
+offset_right = 180.0
+offset_bottom = 126.0
+color = Color(1.8289685e-06, 0.6000861, 0.8474111, 1)
+
+[node name="ColorRect4" type="ColorRect" parent="."]
+offset_top = 180.0
+offset_right = 180.0
+offset_bottom = 227.0
+color = Color(1.8289685e-06, 0.6000861, 0.8474111, 1)
+
+[node name="ThemeRow" type="ScrollContainer" parent="."]
+offset_left = 2.0
+offset_top = 88.0
+offset_right = 182.0
+offset_bottom = 128.0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="ThemeRow"]
+layout_mode = 2
+
+[node name="ShopItem" parent="ThemeRow/HBoxContainer" instance=ExtResource("1_71320")]
+layout_mode = 2
+item_name = "Default Theme"
+desc = "Equip the default theme"
+
+[node name="ShopItem2" parent="ThemeRow/HBoxContainer" instance=ExtResource("1_71320")]
+modulate = Color(1, 0.28627452, 1, 1)
+layout_mode = 2
+cost = 10
+linked_item_index = 1
+item_name = "Placeholder Theme"
+desc = "(10 CC) Equip a placeholder"
+
+[node name="ThemeRow2" type="ScrollContainer" parent="."]
+offset_left = 2.0
+offset_top = 188.0
+offset_right = 182.0
+offset_bottom = 228.0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="ThemeRow2"]
+layout_mode = 2
+
+[node name="ShopItem" parent="ThemeRow2/HBoxContainer" instance=ExtResource("1_71320")]
+layout_mode = 2
+icon = ExtResource("2_l67rk")
+item_type = 1
+shop_icon = ExtResource("2_l67rk")
+bought = true
+item_name = "Bear Avatar"
+equiped = true
+desc = "Equip Bear Avatar"
+
+[node name="ShopItem2" parent="ThemeRow2/HBoxContainer" instance=ExtResource("1_71320")]
+layout_mode = 2
+icon = ExtResource("3_rwlp8")
+cost = 5
+linked_item_index = 1
+item_type = 1
+shop_icon = ExtResource("3_rwlp8")
+item_name = "Bull Dog Avatar"
+desc = "(5 CC) Equip Bull Dog Avatar"
+
+[node name="ShopItem3" parent="ThemeRow2/HBoxContainer" instance=ExtResource("1_71320")]
+layout_mode = 2
+icon = ExtResource("4_jwtvb")
+cost = 5
+linked_item_index = 2
+item_type = 1
+shop_icon = ExtResource("4_jwtvb")
+bought = true
+item_name = "Owl Avatar"
+equiped = true
+desc = "(5 CC) Equip Owl Avatar"
+
+[node name="ShopItem4" parent="ThemeRow2/HBoxContainer" instance=ExtResource("1_71320")]
+layout_mode = 2
+icon = ExtResource("5_yedjq")
+linked_item_index = 3
+item_type = 1
+shop_icon = ExtResource("5_yedjq")
+bought = true
+item_name = "Hornet Avatar"
+equiped = true
+desc = "(5 CC) Equip Hornet Avatar"
+
+[node name="ShopLabel" type="RichTextLabel" parent="."]
+offset_left = 62.0
+offset_top = 1.0
+offset_right = 112.0
+offset_bottom = 41.0
+text = "SHOP"
+
+[node name="RichTextLabel" type="RichTextLabel" parent="."]
+offset_left = 10.0
+offset_top = 55.0
+offset_right = 154.0
+offset_bottom = 95.0
+text = "UI THEMES"
+horizontal_alignment = 1
+
+[node name="RichTextLabel2" type="RichTextLabel" parent="."]
+offset_left = 10.0
+offset_top = 153.0
+offset_right = 154.0
+offset_bottom = 193.0
+text = "AVATARS"
+horizontal_alignment = 1

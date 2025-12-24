@@ -1,0 +1,57 @@
+[gd_scene load_steps=4 format=3 uid="uid://wc3ch55xkjic"]
+
+[ext_resource type="Script" uid="uid://cay8t8w8o1ndc" path="res://Global/Scripts/panel_controller.gd" id="1_4cm0v"]
+[ext_resource type="Theme" uid="uid://bnl8br2yyb3hv" path="res://Global/Themes/PanelControlButtonTheme.tres" id="1_ox1g1"]
+[ext_resource type="Script" uid="uid://dgakdhublvx3v" path="res://Global/Scenes/panel_button.gd" id="2_3qwl3"]
+
+[node name="PanelController" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_4cm0v")
+
+[node name="Buttons" type="HBoxContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 369.0
+offset_right = -1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PanelButtonGame" type="Button" parent="Buttons"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("1_ox1g1")
+text = "Games"
+expand_icon = true
+script = ExtResource("2_3qwl3")
+
+[node name="PanelButtonCal" type="Button" parent="Buttons"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("1_ox1g1")
+text = "Planner"
+expand_icon = true
+script = ExtResource("2_3qwl3")
+panel = "res://Calendar/Scenes/Planner.tscn"
+
+[node name="PanelButtonShop" type="Button" parent="Buttons"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("1_ox1g1")
+text = "Shop"
+expand_icon = true
+script = ExtResource("2_3qwl3")
+panel = "res://Shop/Scenes/shop.tscn"
+
+[connection signal="button_down" from="Buttons/PanelButtonGame" to="Buttons/PanelButtonGame" method="switchScene"]
+[connection signal="button_down" from="Buttons/PanelButtonCal" to="Buttons/PanelButtonCal" method="switchScene"]
+[connection signal="button_down" from="Buttons/PanelButtonShop" to="Buttons/PanelButtonShop" method="switchScene"]

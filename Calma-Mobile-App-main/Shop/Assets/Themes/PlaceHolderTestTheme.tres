@@ -1,0 +1,4 @@
+[gd_resource type="Theme" format=3 uid="uid://conpkjri5q1kj"]
+
+[resource]
+Button/colors/font_color = Color(0.8745098, 0.26666668, 0.8745098, 1)
