@@ -1,0 +1,38 @@
+update.cpp - takes in current inventory of books and processes changes such as add, delete, and change onhand/price based on a transaction file
+
+files:
+  masterFile - a copy of the binary master file which contains all the BookRecs/current inventory in sorted order by ISBN
+  transactionFile - binary file that contains a list of transactions to be done, it contains two fields, the instruction and the BookRec for each transaction
+  outFile - binary file to contain an updated verios of the inventory after the transactions have gone through
+  errorFile - text file that contains list of errors attained from the transaction file
+
+algorithm:
+  main method:
+    - open the files and check for errors if they are not open or incorrect parameters have been provided.
+    - opens a copy file for the master file and removes it after use
+    - calls methods to update the records and print errors and new output file
+    
+  update records:
+    - store the byte offsets for the book records from the masterCopy file into a map by their isbn number
+    - go through one transaction at a time checking for the following cases:
+      - Add: if the book's isbn from the transaction file is not found in the map, add it to the map, put it at the end of the masterFile. Otherwise write an error to error file.
+      - Delete: if the book's isbn from the transaction file is found in the map, delete it from the map. Otherwise write an error to error file.
+      - Change Onhand: if the book's isbn from the transaction file is found in the map, add the onhand in the transaction file to the current onhand and update the book's record in the map and overwrite the new book record at the same byte offset to the masterFile. Do not let it go below zero. If not found, write an error to the error file.
+      - Change Price: if the book's isbn is found in the map, change its price to the price specified by the transaction file, and overwrite the newBook record to the same byte offset in the master file. Otherwise, write an error to the error file.
+    - finds all the book records in the map from the master file and writes it to the outFile (the map should already have them sorted by isbn in ascending order).
+    - close all files
+    
+    
+  print errors:
+    - open the error file for reading, and print each line in the file
+    
+  print output file (new inventory)
+    - open the binary output file for reading go through each BookRec and print its fields. 
+    
+    
+    
+    
+  efficiency:
+    - never had more than one book record in main memory at a single time : used byte offsets
+    - never had more than one transaction record in main memory at a single time 
+    - used switch statements rather than if-else to carry out specified task such as add, delete, change on hand, or change price 

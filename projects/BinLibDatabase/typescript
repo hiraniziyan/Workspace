@@ -1,0 +1,283 @@
+Script started on 2025-01-24 23:37:33-05:00
+]0;hirani_zn@cobra:~/algs/Prog1[hirani_zn@cobra Prog1]$ exit./a.out library.out transact.out update.out[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cc++ update.cpp[Kat[C[C[C[C[C[C[C[C[C[C[C
+#include<iostream>
+#include<fstream>
+#include<map>
+#include<string>
+
+using namespace std;
+
+typedef char String[25];
+struct BookRec
+{
+    	unsigned int isbn;
+    	String name;
+    	String author;
+    	int onhand;
+    	float price;
+    	String type;
+};
+
+enum TransactionType { Add, Delete, ChangeOnhand, ChangePrice };
+struct TransactionRec
+{
+    	TransactionType ToDo;
+    	BookRec B;
+};
+
+void updateRecords(fstream &masterFile, ifstream &transactionFile, ofstream &outFile, ofstream &errorFile);
+void AddRec(map<unsigned int, long> &books, TransactionRec &transaction, int transactionNum, fstream &masterFile, ofstream &errorFile, long &offset);
+void DeleteRec(map<unsigned int, long> &books, TransactionRec &transaction, int transactionNum, fstream &masterFile, ofstream &errorFile);
+void ProcessChangeOnHand(map<unsigned int, long> &books, TransactionRec &transaction, int transactionNum, fstream &masterFile, ofstream &errorFile);
+void ProcessChangePrice(map<unsigned int, long> &books, TransactionRec &transaction, int transactionNum, fstream &masterFile, ofstream &errorFile);
+void printErrors();
+void printLibrary(string filename);
+
+int main(int argc, char* argv[])
+{
+    	// check for correct num of command line arguments
+    	if (argc != 4)
+    	{
+        	cout << "Invalid command line arguments.\n";
+        	return 1;
+    	}
+
+    	string cpy = "cp " + string(argv[1]) + " copy.out"; // get the string for the copy command to copy master file to copy.out
+    	system(cpy.c_str());    // make a copy of the master file
+
+    	// open the copy master file, transaction file, and outfile in binary for reading or writing and open the ERRORS file for writing errors into it.
+    	fstream masterFile("copy.out", ios::in | ios::out | ios::binary);
+    	ifstream transactionFile(argv[2], ios::binary);
+    	ofstream outFile(argv[3], ios::binary);
+    	ofstream errorFile("ERRORS", ios::out);
+
+    	// check for errors in opening files
+    	if (!masterFile)
+    	{
+        	cout << "Unable to open copy of " << argv[1] << endl;
+   	}
+    	if (!transactionFile)
+    	{
+        	cout << "Unable to open " << argv[2] << endl;
+        	return 1;
+    	}
+    	if (!outFile)
+    	{
+        	cout << "Unable to create " << argv[3] << endl;
+        	return 1;
+    	}
+    	if (!errorFile)
+    	{
+        	cout << "Unable to create ERRORS\n";
+    	}
+
+    	updateRecords(masterFile, transactionFile, outFile, errorFile); // update the records
+    	remove("copy.out");     // remove the copy file
+
+    	printErrors();  // print the errors
+    	printLibrary(argv[3]);  // print the contents of the new file
+
+    	return 0;
+}
+
+void updateRecords(fstream &masterFile, ifstream &transactionFile, ofstream &outFile, ofstream &errorFile)
+{
+    	// Pre: all files are open
+    	// Post: goes through and executes or denies each transaction
+
+    	map<unsigned int, long> books;  // map for ISBN to byte books
+
+    	// read in the isbn's to the map with byte books
+    	long offset = 0;
+    	BookRec book;
+    	while (masterFile.read((char*)&book, sizeof(BookRec)))
+    	{
+        	books[book.isbn] = offset;
+        	offset += sizeof(BookRec);  // increment the byte offset by the size of BookRec
+    	}	
+
+    	TransactionRec transaction;
+    	int transactionNum = 0;
+
+    	// read through one transaction at a time
+    	while (transactionFile.read((char*)&transaction, sizeof(TransactionRec)))
+    	{
+        	transactionNum++;       // increment the transaction number
+
+        	// get the ToDo and do the procedure for add, delete, changeOnhand, or Change Price
+        	switch (transaction.ToDo)
+        	{
+        		case Add:
+            			AddRec(books, transaction, transactionNum, masterFile, errorFile, offset);
+            		break;
+        		case Delete:
+            			DeleteRec(books, transaction, transactionNum, masterFile, errorFile);
+            		break;
+        		case ChangeOnhand:
+            			ProcessChangeOnHand(books, transaction, transactionNum, masterFile, errorFile);
+            		break;
+        		case ChangePrice:
+            			ProcessChangePrice(books, transaction, transactionNum, masterFile, errorFile);
+            		break;
+        		default:
+            			errorFile << "Error in transaction number " << transactionNum << ": unknown type." << endl; // error for invalid command
+            		break;
+        	}
+    	}
+	
+	masterFile.clear();	
+    	masterFile.seekg(0, ios::beg);  // reset file pointer to the beginning
+
+
+	map<unsigned int, long>::iterator j;
+	
+	for (j = books.begin(); j != books.end(); j++)
+	{
+		unsigned int isbn = j->first;    // ISBN
+        	long byteOffset = j->second;     // Offset in file
+
+        	// Seek to the specific byte offset in the master file
+        	masterFile.seekg(byteOffset);
+
+        	masterFile.read((char*)&book, sizeof(BookRec));  // Read the book at that position
+
+            	outFile.write((const char*)&book, sizeof(BookRec));  // Write the book record to the output file
+	}
+
+    	// close all files
+    	masterFile.close();
+    	transactionFile.close();
+    	outFile.close();
+    	errorFile.close();
+}
+
+void AddRec(map<unsigned int, long> &books, TransactionRec &transaction, int transactionNum, fstream &masterFile, ofstream &errorFile, long &offset)
+{
+    	// Pre: the transaction file has sent the command for add
+    	// Post: BookRec is added to the map or an error is displayed if already in the map
+    	if (books.find(transaction.B.isbn) != books.end())
+    	{
+        	errorFile << "Error in transaction number " << transactionNum << ": cannot add--duplicate key " << transaction.B.isbn << endl;
+    	}
+    	else
+    	{
+        	// If the book is not in the map, write it to the map
+        	books[transaction.B.isbn] = offset;
+        	offset += sizeof(BookRec);
+
+        	masterFile.close();  // Close the file before reopening it
+        	masterFile.open("copy.out", ios::in | ios::out | ios::binary | ios::app);  // Reopen the file in append mode
+
+        	masterFile.write((const char*) &(transaction.B), sizeof(BookRec));
+    	}
+}
+
+
+void DeleteRec(map<unsigned int, long> &books, TransactionRec &transaction, int transactionNum, fstream &masterFile,  ofstream &errorFile)
+{
+    	// Pre: the transaction file has sent the command for delete
+    	// Post: deletes book from the file or displays error in error file if book is not in map
+
+    	if (books.find(transaction.B.isbn) != books.end())
+    	{
+        	books.erase(transaction.B.isbn);  // Remove the ISBN from books map
+    	}
+    	else
+    	{
+        	errorFile << "Error in transaction number " << transactionNum << ": cannot delete--no such key " << transaction.B.isbn << endl;
+    	}
+}
+
+void ProcessChangeOnHand(map<unsigned int, long> &books, TransactionRec &transaction, int transactionNum, fstream &masterFile, ofstream &errorFile)
+{
+    	// Pre: the transaction file has sent the command for change on hand
+    	// Post: changed the onhand number by the amount specified by the transaction file (does not go below 0 and writes errors to error file for no book found)
+
+    	if (books.find(transaction.B.isbn) != books.end())
+    	{
+		masterFile.seekg(books[transaction.B.isbn]);	// get location of book in master file
+		BookRec book;
+		masterFile.read((char*)&book, sizeof(BookRec));	// read the book in
+		book.onhand += transaction.B.onhand;	// update the onhand
+		if (book.onhand < 0)
+        	{
+            		errorFile << "Error in transaction number " << transactionNum << ": count = " << book.onhand << " for key " << transaction.B.isbn << endl;
+            		book.onhand = 0;
+        	}
+		masterFile.seekp(books[transaction.B.isbn]);	// seek the location of the book in the master file 
+		masterFile.write((const char*) &book, sizeof(BookRec));	// overwrite
+    	}
+    	else
+    	{
+        	errorFile << "Error in transaction number " << transactionNum << ": cannot change count--no such key " << transaction.B.isbn << endl;
+    	}
+}
+
+void ProcessChangePrice(map<unsigned int, long> &books, TransactionRec &transaction, int transactionNum, fstream &masterFile, ofstream &errorFile)
+{
+    	// Pre: transaction file has sent command for change price
+    	// Post: changed the price for the specified book
+
+    	if (books.find(transaction.B.isbn) != books.end())
+    	{
+        	// Find the book in the master file using the offset
+        	masterFile.seekg(books[transaction.B.isbn]);
+		BookRec book;
+		masterFile.read((char*) &book, sizeof(BookRec)); // read book rec from master file
+        	book.price = transaction.B.price; // set new price
+
+
+        	// Write the modified book record back to the file
+        	masterFile.seekp(books[transaction.B.isbn]);
+        	masterFile.write((const char*)&book, sizeof(BookRec));
+    	}
+    	else
+    	{
+        	errorFile << "Error in transaction number " << transactionNum << ": cannot change price--no such key " << transaction.B.isbn << endl;
+    	}
+}
+
+void printErrors()
+{
+    	// Pre: All errors in the program are in the input file
+    	// Post: The errors from input file are printed on screen
+
+    	ifstream errorFile("ERRORS");
+    	string error;
+    	while (getline(errorFile, error))
+    	{
+        	cout << error << endl;
+    	}	
+}
+
+void printLibrary(string filename)
+{
+    	// Pre: The file has been created or updated
+    	// Post: Prints the contents of the master file
+
+    	ifstream file(filename, ios::binary);
+    	BookRec book;
+    	while (file.read((char*)&book, sizeof(BookRec)))
+    	{
+		printf("%010u %25s %25s %10d %10.2f %15s\n", book.isbn, book.name, book.author, book.onhand, book.price, book.type);
+    	}
+}
+]0;hirani_zn@cobra:~/algs/Prog1[hirani_zn@cobra Prog1]$ cat update.cppexit[K./a.out library.out transact.out update.out[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cc++ update.cpp[Kat[C[C[C[C[C[C[C[C[C[C[C++[C[C[C[C[C[C[C[C[C[C[C
+]0;hirani_zn@cobra:~/algs/Prog1[hirani_zn@cobra Prog1]$ c++ update.cppat[C[C[C[C[C[C[C[C[C[C[Cexit[K./a.out library.out transact.out update.out[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cc++ update.cpp[Kat[C[C[C[C[C[C[C[C[C[C[C++[C[C[C[C[C[C[C[C[C[C[C./a.out library.out transact.out update.out
+Error in transaction number 1: cannot add--duplicate key 123766891
+0123766891                Tom Sawyer               Twain, Mark          2       8.50         fiction
+0239678325           Leaves of Grass             Whitman, Walt          8      29.99          poetry
+0249638325              Great Gatsby      Fitzgerald, F. Scott          0       5.99         fiction
+0259648323            Scarlet Letter      Hawthorne, Nathaniel          8       4.78         fiction
+1229648991      Whisper of the River              Sams, Ferrol          4      21.95         fiction
+1239678325                 Moby Dick          Melville, Herman          2      13.98         fiction
+2119674425      Last of the Mohicans    Cooper, James Fenimore          1       8.75         fiction
+2269572525                   Odyssey                     Homer          5       9.99         fiction
+3391679915         Heart of Darkness            Conrad, Joseph          0      14.45         fiction
+3393578325            Les Miserables              Hugo, Victor          2      19.98         fiction
+3791527325          Canterbury Tales         Chaucer, Geoffrey          1      20.00           drama
+3995783225       Old Man and the Sea         Hemingway, Ernest          3       9.95         fiction
+]0;hirani_zn@cobra:~/algs/Prog1[hirani_zn@cobra Prog1]$ ./a.out library.out transact.out update.out[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cc++ update.cpp[Kat[C[C[C[C[C[C[C[C[C[C[Cexit[K./a.out library.out transact.out update.out[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cc++ update.cpp[Kat[C[C[C[C[C[C[C[C[C[C[C++[C[C[C[C[C[C[C[C[C[C[C./a.out library.out transact.out update.out[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cexit[Kcat update.cpp++[C[C[C[C[C[C[C[C[C[C[C./a.out library.out transact.out update.out[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[K./a.out library.out transact.out update.out[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cc++ update.cpp[Kat[C[C[C[C[C[C[C[C[C[C[Cexit[Kcat update.cpp++[C[C[C[C[C[C[C[C[C[C[C./a.out library.out transact.out update.out[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Kei[Kxit
+exit
+
+Script done on 2025-01-24 23:38:10-05:00

@@ -1,0 +1,46 @@
+jtar Program: write a linux version of the tar command to create, unpack, and list files in a tarfile
+
+File class (file.h file.cpp): creates file objects with their metadata including file name, file size, protection mode, and timestamp all of which are stored as character arrays in the constructors
+
+- It contains a default constructor, a parameterized constructor, and copy constructor (operator overloaded '=') for holding the data listed above along with a flag for if the file is a directory.
+- Methods of the file class allow user to:
+	-get name of file
+	-get size of file
+	-get timestamp of file
+	-get protection mode 
+	-check if file is a directory
+	-get the size of the file record
+
+
+jtar.cpp
+
+- reads one of following commands from command line (-cf, -tf, -xf, --help)
+- if none of the following commands have been input, prints an error
+- create tar file (-cf) 
+	- user has to run the program with following command ./myJtar -cf tarfilename file1 file2 ...
+	- program creates an array and stores all files to be archived into the array
+	- goes through the array, and checks if any files are directories
+	- if the file is a directory, use system command ls, popen and fgets to retireve all files in directory
+	- uses recursion to get inside subdirectories, and keeps building file path (from directory of tar file) for each recursive call "/"
+	- when filepath is retrieved, push it into the array of files
+	- next the program will open a tarfile in binary and store the amount of files at the top of the tar file
+	- it will then go through each file in the files array and get the file metadata to create a file object: protection mode, file size, and timestamp using lstat.
+	- create a file object with the metadata attained
+	- if the file is a directory, flag it and write it to the tar file
+	- if the file is a regular file, write it to the tar file and open it to read and then write its contents to the tar file
+- list files in tar file
+	- open the tar file for reading
+	- read in the amount of files stored in the tar file from the top
+	- for each file in the tar file, read it into a file object and print its path
+	- if the file is a regular file, get the file's size and skip over that many bytes to get to next record
+- extract files
+	- open tar file for reading, and read in number of files stored in it
+	- for each file, read it into a file object
+	- if the file is a directory, use the system call to mkdir if the directory does not exist (check this by opening the directory as a file to read, if it does not then directory does not exist)
+	- if the file is a regular file, create the file, read its contents into a buffer from the tar file, and write it to the file
+	- use system commands chmod and touch to restore original file metadata which is stored in file object
+- print help (--help)
+	- prints help menu
+- program uses methods to check for if file is directory, get file size, protection mode, and filestamp using lstat.
+
+- catches all errors when failing to open file and any command line input errors

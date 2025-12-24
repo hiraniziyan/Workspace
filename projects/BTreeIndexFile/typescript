@@ -1,0 +1,1407 @@
+Script started on 2025-04-30 20:04:59-04:00
+]0;hirani_zn@cobra:~/algs/Prog3[hirani_zn@cobra Prog3]$ rm myCreate
+]0;hirani_zn@cobra:~/algs/Prog3[hirani_zn@cobra Prog3]$ rm tree.ind
+]0;hirani_zn@cobra:~/algs/Prog3[hirani_zn@cobra Prog3]$ rm [K[K[Kls[K[Kmake clean
+rm -f *.o
+]0;hirani_zn@cobra:~/algs/Prog3[hirani_zn@cobra Prog3]$ ls
+album.baby  album.large  album.small    btree.cpp  createBT.cpp  final.final  output1.txt  trans2.dat   [0m[01;32mupdateBT[0m
+album.cpp   album.med    albumTest.cpp  btree.h    file1         makefile     output2.txt  typescript
+album.h     album.rand   [01;32ma.out[0m          [01;32mcreateBT[0m   file2         output1.tx   trans1.dat   typescript2
+]0;hirani_zn@cobra:~/algs/Prog3[hirani_zn@cobra Prog3]$ m[Kcat btree.h btree.cpp createBT.cpp makefile
+#include <vector>
+#include <set>
+#include <iostream>
+#include <cstring>
+#include <string>
+#include <cstdlib>
+#include "album.h"
+using namespace std;
+
+#ifndef BTREE_H
+#define BTREE_H
+
+class Album;
+const int ORDER = 5;
+typedef Album keyType;
+typedef int IndexArray[ORDER];
+typedef keyType ValueArray[ORDER-1];
+
+struct BTNode
+{
+        int currSize;
+        ValueArray contents;
+        IndexArray child;
+};
+
+struct Pair
+{
+        Album element;
+        int loffset;
+        int roffset;
+        friend bool operator < (const Pair& p1, const Pair& p2)
+           { return (p1.element < p2.element);  }
+};
+
+class BTree
+{
+ public:
+        BTree();
+        void writeHeader (char * fileName);
+        void insert (keyType key);
+        void reset (char * filename);
+        void close ();
+        void printTree();
+        void inorder();
+        void reverse();
+        int getHeight();
+        bool search (string key);
+        keyType retrieve (string key);
+        void totalio() const;
+        int countLeaves();
+ private:
+        BTNode root;
+        int rootAddr;
+        char treeFileName[80];
+        fstream treeFile;
+        int height;
+        void printTree (int recAddr);
+        void inorder (int recAddr);
+        void reverse (int recAddr);
+        int read;
+        int write;
+        int findAddr (keyType key, BTNode t, int tAddr);
+        int findpAddr(keyType key, BTNode t, int tAddr);
+	bool insert(keyType key, int nodeAddr, keyType& midKey, int& newChildAddr);
+        BTNode getNode (int recAddr);
+        void printNode(int recAddr);
+        void placeNode (keyType k,int recAddr,int oneAddr,int twoAddr);
+        bool isLeaf (int recAddr);
+        bool isLeaf(BTNode t);
+        int countLeaves(int recAddr);
+        void adjRoot (keyType rootElem, int oneAddr, int twoAddr);
+	void splitNode (keyType & key, int recAddr, int newLeft, int newRight, int& leftAddr,int& rightAddr);
+        bool search (string key, BTNode t, int tAddr);
+	int writeNode(BTNode& node);
+	bool insertIntoLeaf(int nodeAddr, BTNode& t, const keyType& key, keyType& midKey, int& newChildAddr);
+        bool insertIntoInternal(int nodeAddr, BTNode& t, int childIndex, keyType midKey, int newChildAddr, keyType& parentKey, int& rightChild);
+	
+
+};
+
+#endif
+#include "btree.h"
+#include <cstring>
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+//Constructor
+BTree::BTree()
+{
+	// initialize rootAddr, currSize, and child addresses
+	rootAddr = -1;				
+    	root.currSize = 0;
+    	for (int i = 0; i < ORDER; i++)
+    	{
+        	root.child[i] = -1;
+    	}
+
+	// initialize variables for height, read count, and write count
+    	height = 0;
+    	read = 0;
+    	write = 0;
+}
+
+void BTree::writeHeader(char* fileName)
+{
+	// open treeFile
+    	fstream treeFile(fileName, ios::out | ios::binary);
+	if (!treeFile)
+	{
+		cout << "Unable to open file : " << fileName << endl;	// error message if unable to open treeFile
+		exit(1);
+	}
+
+	// create and initalize header node
+    	BTNode header;
+    	header.currSize = 0;
+
+    	for (int i = 0; i < ORDER; i++)
+        	header.child[i] = -1;
+
+    	treeFile.write((const char*)&header, sizeof(BTNode));	// write header node to file
+	write++;
+
+    	treeFile.close();
+}
+
+void BTree::reset(char* filename)
+{
+	// open treeFile
+    	treeFile.open(filename, ios::in | ios::out | ios::binary);
+	if(!treeFile)
+	{
+		cout << "Unable to open file : " << filename << endl;	// error message if unable to open treeFile
+		exit(1);
+	}
+
+	// read the header from the beginning of the treeFile
+    	BTNode header = getNode(0);
+
+    	rootAddr = header.child[0]; 	// get the root address from header node
+}
+
+void BTree::close()
+{
+    	BTNode header = getNode(0);	// read header node from beginning of file
+    	header.child[0] = rootAddr;	// set the root address to new new address after program is over
+
+	// write header back to file
+    	treeFile.seekp(0, ios::beg);
+    	treeFile.write((const char*)&header, sizeof(BTNode));
+	write++;
+
+    	treeFile.close();
+}
+
+void BTree::insert(keyType key)
+{
+    	cout << "Now inserting " << key;
+
+	// create new root if it does not exist
+    	if (rootAddr == -1)
+    	{
+        	root.contents[0] = key;		// write the key to the first slot of the contents array for root
+		root.currSize = 1;		// increase currSize to 1
+	
+        	rootAddr = writeNode(root);	// write the root to the back of the treeFile
+	
+        	return;
+    	}
+
+    	keyType midKey;			
+    	int newChildAddr = -1;
+
+	// call the recursive insert method and return true if the recursion gets a split all the way up to the root
+    	bool rootSplits = insert(key, rootAddr, midKey, newChildAddr);	
+
+    	if (rootSplits)
+        	adjRoot(midKey, rootAddr, newChildAddr);	// if the root splits, adjust the root to make a new root
+}
+
+bool BTree::insert(keyType key, int nodeAddr, keyType& midKey, int& newChildAddr)
+{
+        BTNode t = getNode(nodeAddr);		// get the root node on the first call, then any node during recursive decent of the tree
+	
+	// if node is a leaf, insert key into the leaf (insertIntoLeaf calls spilt if needed)
+        if (isLeaf(t))
+                return insertIntoLeaf(nodeAddr, t, key, midKey, newChildAddr);
+
+	int i;
+	for (i = t.currSize - 1; i >= 0 && key < t.contents[i]; i--);	// get the location of where to insert
+
+        i++; // increment i because the address to the child is stored in the next slot of the child array
+
+        bool split = insert(key, t.child[i], midKey, newChildAddr);	// recursively call insert to decend the tree
+
+	// if there was a split, insert middle key into parent node (insertIntoInternal calls split if needed)
+        if (split) 
+                return insertIntoInternal(nodeAddr, t, i, midKey, newChildAddr, midKey, newChildAddr);	
+	else
+		return false;
+       
+}
+	
+
+bool BTree::insertIntoLeaf(int nodeAddr, BTNode& t, const keyType& key, keyType& midKey, int& newChildAddr)
+{
+	// if leaf is not full, insert directly into it
+    	if (t.currSize < ORDER - 1)	
+    	{		
+		// find where to insert key to array
+        	int i = t.currSize - 1;	
+        	while (i >= 0 && key < t.contents[i])
+        	{
+            		t.contents[i + 1] = t.contents[i];	// shift everything to right
+            		i--;
+        	}
+
+        	t.contents[i + 1] = key;		// insert key
+        	t.currSize++;				// increment current size of contents array
+
+		// update the node in the file
+        	treeFile.seekp(nodeAddr, ios::beg);			
+        	treeFile.write((const char*)&t, sizeof(BTNode));
+        	write++;
+
+        	return false;	// false since no split was needed
+    	}
+	else
+    	{
+		
+		int leftAddr, rightAddr;	// addresses for the nodes created by split
+    		keyType tempKey = key;		// key copy for holding the middle key to be promoted during split
+	
+		// split node into two; get the address of new node
+    		splitNode(tempKey, nodeAddr, -1, -1, leftAddr, rightAddr);	
+	
+    		midKey = tempKey;		// set middle key
+    		newChildAddr = rightAddr;	// set new node address
+
+    		return true;	// split was needed
+	}
+}
+
+bool BTree::insertIntoInternal(int nodeAddr, BTNode& t, int childIndex, keyType midKey, int newChildAddr, keyType& parentKey, int& rightChild)
+{
+	// if internal node has space, insert key and shift elements and child addresses
+    	if (t.currSize < ORDER - 1)
+    	{
+        	for (int i = t.currSize - 1; i >= childIndex; i--)
+        	{
+            		t.contents[i + 1] = t.contents[i];	// shift contents to right while trying to find space to insert
+            		t.child[i + 2] = t.child[i + 1];	// shift child addresses to right
+        	}
+
+        	t.contents[childIndex] = midKey;		// insert key
+        	t.child[childIndex + 1] = newChildAddr;		// insert the new child address
+       	 	t.currSize++;					
+
+		// update node in file
+        	treeFile.seekp(nodeAddr, ios::beg);			
+       	 	treeFile.write((const char*)&t, sizeof(BTNode));
+        	write++;
+
+        	return false;
+    	}
+	else
+	{
+    		int leftAddr, rightAddr;	// addresses for the nodes created by split
+
+		// split node into two; get the address of new node
+    		splitNode(midKey, nodeAddr, t.child[childIndex], newChildAddr, leftAddr, rightAddr);
+
+    		parentKey = midKey;		// set parent key as the middle key
+    		rightChild = rightAddr;		// set new node address
+
+    		return true;
+	}
+}
+
+void BTree::splitNode(keyType & key, int recAddr, int newLeft, int newRight, int& leftAddr, int& rightAddr)
+{
+    	cout << "Now Splitting!\n";
+
+    	BTNode t = getNode(recAddr);	// get node to split
+
+    	vector<Pair> pairArr;	// create pair array to hold all pairs in a node
+	
+	Pair newPair;			// create a newPair for the key to insert
+        newPair.element = key;
+        newPair.loffset = newLeft;
+        newPair.roffset = newRight;
+        pairArr.push_back(newPair);		// push it into the array
+	
+	// go through current node creating pairs for all elements and push them into array
+    	for (int i = 0; i < t.currSize; i++)
+    	{
+        	Pair pair;
+        	pair.element = t.contents[i];
+        	pair.loffset = t.child[i];
+        	pair.roffset = t.child[i + 1];
+        	pairArr.push_back(pair);
+    	}
+
+    	sort(pairArr.begin(), pairArr.end());	// sort the pair array
+
+    	int mid = (t.currSize + 1) / 2;		
+    	key = pairArr[mid].element;	// get the middle element of the pair array to be the one that is promoted during split
+	
+    	vector<int> childPtrs(t.currSize + 2);		// create an array of child addresses
+
+	// put all the child offsets in the child pointer array
+    	childPtrs[0] = pairArr[0].loffset;	
+    	for (int k = 0; k < t.currSize + 1; k++)
+    	{
+        	childPtrs[k + 1] = pairArr[k].roffset;
+    	}	
+
+	// create the left node
+    	BTNode L;
+    	L.currSize = mid;
+    	for (int i = 0; i < ORDER; i++) 	// initialize children addresses
+		L.child[i] = -1;
+    	for (int i = 0; i < mid; i++) 			// go until half the pair array inserting each element
+		L.contents[i] = pairArr[i].element;
+    	for (int i = 0; i <= mid; i++) 			// go until half the child pointer array putting each child address into node child array
+		L.child[i] = childPtrs[i];
+
+	// create right node
+    	BTNode R;	
+    	R.currSize = t.currSize - mid;	
+    	for (int i = 0; i < ORDER; i++) 		// initialize child addresses
+		R.child[i] = -1;
+    	for (int i = mid + 1, j = 0; i < t.currSize + 1; i++, j++) 	// go through the second half of the pair array inserting each element
+		R.contents[j] = pairArr[i].element;
+    	for (int i = 0; i <= R.currSize; i++) 				// fill child addresses to child array of right node
+		R.child[i] = childPtrs[mid + 1 + i];
+	
+	// write the left node in the place of the current node
+    	treeFile.seekp(recAddr, ios::beg);
+    	treeFile.write((const char*)&L, sizeof(BTNode));
+    	write++;
+
+    	leftAddr = recAddr;
+
+    	rightAddr = writeNode(R);	// write the right node at the end of file
+}
+
+void BTree::adjRoot(keyType rootElem, int oneAddr, int twoAddr)
+{
+	cout << "Now Adjusting Root!\n";
+
+	// create new root, and initialize it with the promoted key(rootElem)
+    	BTNode newRoot;
+    	newRoot.currSize = 1;
+    	newRoot.contents[0] = rootElem;
+
+    	for (int i = 0; i < ORDER; i++) 	// initialize child addresses
+		newRoot.child[i] = -1;
+
+	// set the pointer to the left and right node
+    	newRoot.child[0] = oneAddr;	
+    	newRoot.child[1] = twoAddr;
+
+    	rootAddr = writeNode(newRoot);	// write the node at the end of file and save rootAddr
+
+    	height++;	// increment height of btree
+}
+
+bool BTree::search(string key)
+{
+	if (rootAddr == -1) 			// don't search if no root
+		return false;
+
+    	BTNode t = getNode(rootAddr);		// get the root
+
+    	return search(key, t, rootAddr);	// search recursively from root
+}
+
+bool BTree::search(string key, BTNode t, int tAddr)
+{
+	int i;
+
+    	for (i = 0; i < t.currSize && key > t.contents[i].getUPC(); i++);	// get index of where to descend/find key
+
+    	if (key == t.contents[i].getUPC())	// return true if key is found
+		return true;	
+	
+    	if (isLeaf(t)) 				// return false if key is not found and we are at a leaf
+		return false;
+
+    	return search(key, getNode(t.child[i]), t.child[i]);	// search from the child at the index i
+}
+
+bool BTree::isLeaf(BTNode node)
+{	
+	// check if all address of children of the node do not equal -1, if they do the it is a leaf
+        for (int i = 0; i <= node.currSize; i++)	
+                if (node.child[i] != -1)
+                        return false;
+        return true;
+}
+
+bool BTree::isLeaf(int recAddr)
+{
+        BTNode node = getNode(recAddr);		// get node at the address
+        return isLeaf(node);			// check if node is a leaf
+}
+
+void BTree::printTree()
+{
+    	printTree(rootAddr);		// print tree from root
+}
+
+void BTree::printTree(int recAddr)
+{
+	// pre order printing of tree
+    	if (recAddr != -1)
+       	{
+		// get and print node at address
+    		BTNode dummy = getNode(recAddr);	
+		printNode(recAddr);
+
+		// descend tree recursively
+        	for (int i = 0; i <= dummy.currSize; i++)
+            		printTree(dummy.child[i]);
+	}
+}
+
+void BTree::printNode(int recAddr)
+{
+	// seek the node at the adress
+	treeFile.seekg(recAddr, ios::beg);
+	
+	BTNode dummy; 
+	
+	treeFile.read((char*) &dummy, sizeof(BTNode));
+	
+	read++;
+	
+	cout << "    *** node of size " << dummy.currSize << " ***\n";
+
+	// print the contents of the node
+	for (int i = 0; i < dummy.currSize; i++)
+		cout << dummy.contents[i];
+
+}
+
+int BTree::writeNode(BTNode& node)
+{
+	// go to the end of file, and write the node
+        treeFile.seekp(0, ios::end);
+
+        int addr = int(treeFile.tellp());
+
+        treeFile.write((const char*)&node, sizeof(BTNode));
+
+        write++;
+
+        return addr;	// return address the node is written at
+}
+
+BTNode BTree::getNode(int recAddr)
+{
+	// seek the node at the address in file and return it
+        BTNode node;			
+
+        treeFile.seekg(recAddr, ios::beg);
+
+        treeFile.read((char*)&node, sizeof(BTNode));
+
+        read++;
+
+        return node;
+}
+
+void BTree::totalio() const
+{
+	// print reads and writes
+	cout << "Total Writes: " << write << endl;
+	cout << "Total Reads: " << read << endl;
+}
+
+int BTree::getHeight()
+{	
+	// return height of the tree
+    	return height;
+}
+
+#include "btree.h"
+#include <fstream>
+#include <iostream>
+
+using namespace std;
+
+int main(int argc, char* argv[]) 
+{
+	// invalid args
+    	if (argc != 3) 
+	{
+        	cerr << "Invalid number of arguments." << endl;
+        	return 1;
+    	}
+
+    	BTree tree;	// create Btree
+
+	// write header and retrieve root address from file (currently -1)
+    	tree.writeHeader(argv[2]);
+    	tree.reset(argv[2]);
+
+	// open album file
+    	ifstream albumFile(argv[1]);
+    	if (!albumFile) 
+	{
+        	cout << "Unable to open album file." << endl;
+        	return 1;
+    	}
+
+	// read albums from file and insert into tree
+    	Album temp;
+    	while (albumFile >> temp) 
+	{
+        	tree.insert(temp);
+    	}
+
+	cout << "-------- B-tree of height " << tree.getHeight() << " --------" << endl;
+
+    	tree.printTree();	// print tree
+
+    	albumFile.close();	// close file, write the new root address to header
+    	return 0;
+}	
+all: create update
+
+create: createBT.cpp btree.o album.o
+	c++ -o myCreate createBT.cpp btree.o album.o
+
+update: updateBT.cpp btree.o album.o
+	c++ -o myUpdate updateBT.cpp btree.o album.o
+
+btree.o: btree.cpp
+	c++ -c btree.cpp
+
+album.o: album.cpp
+	c++ -c album.cpp
+
+clean:
+	rm -f *.o
+]0;hirani_zn@cobra:~/algs/Prog3[hirani_zn@cobra Prog3]$ make
+c++ -c btree.cpp
+c++ -c album.cpp
+c++ -o myCreate createBT.cpp btree.o album.o
+make: *** No rule to make target 'updateBT.cpp', needed by 'update'.  Stop.
+]0;hirani_zn@cobra:~/algs/Prog3[hirani_zn@cobra Prog3]$ make[K./crea[K[K[K[KmyCreate album.med btree.ind[K[K[K[K[K[K[K[K[Ktree.ind
+Now inserting 08722|Counting Crows|This Desert Life|
+Now inserting 75599|U2|All That You Can't Leave Behind|
+Now inserting 42276|Tom Petty|Into the Great Wide Open|
+Now inserting 02284|Kenny Loggins|Footloose|
+Now inserting 20831|Dave Matthews|Everyday|
+Now Splitting!
+Now Adjusting Root!
+Now inserting 99000|Train|Drops of Jupiter|
+Now inserting 00100|Dido|No Angel|
+Now inserting 00101|Eva Cassidy|Songbird|
+Now inserting 00102|Metallica|Ride the Lightning|
+Now Splitting!
+Now inserting 00000|Any Song|Any Artist|
+Now inserting 00001|Any Song|Any Artist|
+Now inserting 00002|Any Song|Any Artist|
+Now Splitting!
+Now inserting 00003|Any Song|Any Artist|
+Now inserting 00004|Any Song|Any Artist|
+Now inserting 00005|Any Song|Any Artist|
+Now Splitting!
+Now inserting 99999|Any Song|Any Artist|
+Now inserting 99998|Any Song|Any Artist|
+Now Splitting!
+Now Splitting!
+Now Adjusting Root!
+Now inserting 00006|Any Song|Any Artist|
+Now inserting 00007|Any Song|Any Artist|
+Now inserting 00008|Any Song|Any Artist|
+Now Splitting!
+Now inserting 00009|Any Song|Any Artist|
+Now inserting 00010|Any Song|Any Artist|
+Now inserting 00011|Any Song|Any Artist|
+Now Splitting!
+Now inserting 00012|Any Song|Any Artist|
+Now inserting 00013|Any Song|Any Artist|
+Now inserting 00014|Any Song|Any Artist|
+Now Splitting!
+Now Splitting!
+-------- B-tree of height 2 --------
+    *** node of size 2 ***
+00008|Any Song|Any Artist|
+00102|Metallica|Ride the Lightning|
+    *** node of size 2 ***
+00002|Any Song|Any Artist|
+00005|Any Song|Any Artist|
+    *** node of size 2 ***
+00000|Any Song|Any Artist|
+00001|Any Song|Any Artist|
+    *** node of size 2 ***
+00003|Any Song|Any Artist|
+00004|Any Song|Any Artist|
+    *** node of size 2 ***
+00006|Any Song|Any Artist|
+00007|Any Song|Any Artist|
+    *** node of size 2 ***
+00011|Any Song|Any Artist|
+00014|Any Song|Any Artist|
+    *** node of size 2 ***
+00009|Any Song|Any Artist|
+00010|Any Song|Any Artist|
+    *** node of size 2 ***
+00012|Any Song|Any Artist|
+00013|Any Song|Any Artist|
+    *** node of size 2 ***
+00100|Dido|No Angel|
+00101|Eva Cassidy|Songbird|
+    *** node of size 2 ***
+20831|Dave Matthews|Everyday|
+99000|Train|Drops of Jupiter|
+    *** node of size 2 ***
+02284|Kenny Loggins|Footloose|
+08722|Counting Crows|This Desert Life|
+    *** node of size 2 ***
+42276|Tom Petty|Into the Great Wide Open|
+75599|U2|All That You Can't Leave Behind|
+    *** node of size 2 ***
+99998|Any Song|Any Artist|
+99999|Any Song|Any Artist|
+]0;hirani_zn@cobra:~/algs/Prog3[hirani_zn@cobra Prog3]$ ./myCreate album.med tree.ind > file1[1P[1P[1P[1@l[1@a[1@r[1@e[1P[1@g[1@e
+]0;hirani_zn@cobra:~/algs/Prog3[hirani_zn@cobra Prog3]$ ./myCreate album.large tree.ind > file1[1P[1P[1P[1P[1P[1@l[1@a[1@r[1@g[1@e[1P[1P[1P[1P[1P[1P[1P[1P[1@c[1@r[1@e[1@a[1@t[1@e[1@B[1@T[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[K2
+]0;hirani_zn@cobra:~/algs/Prog3[hirani_zn@cobra Prog3]$ ./createBT album.large tree.ind > file2[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Kdiff fl[Kile1 file2
+590c590
+<     *** node of size 3 ***
+---
+>     *** node of size 3 ***     
+594c594
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+597c597
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+600c600
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+603c603
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+606c606
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+609c609
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+612c612
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+615c615
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+618c618
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+621c621
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+624c624
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+627c627
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+630c630
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+633c633
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+636c636
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+639c639
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+642c642
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+645c645
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+648c648
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+651c651
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+654c654
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+657c657
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+660c660
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+663c663
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+666c666
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+669c669
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+672c672
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+675c675
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+678c678
+<     *** node of size 4 ***
+---
+>     *** node of size 4 ***     
+683c683
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+686c686
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+689c689
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+692c692
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+695c695
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+698c698
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+701c701
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+704c704
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+707c707
+<     *** node of size 4 ***
+---
+>     *** node of size 4 ***     
+712c712
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+715c715
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+718c718
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+721c721
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+724c724
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+727c727
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+730c730
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+733c733
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+736c736
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+739c739
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+742c742
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+745c745
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+748c748
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+751c751
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+754c754
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+757c757
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+760c760
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+763c763
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+766c766
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+769c769
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+772c772
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+775c775
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+778c778
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+781c781
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+784c784
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+787c787
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+790c790
+<     *** node of size 4 ***
+---
+>     *** node of size 4 ***     
+795c795
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+798c798
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+801c801
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+804c804
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+807c807
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+810c810
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+813c813
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+816c816
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+819c819
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+822c822
+<     *** node of size 4 ***
+---
+>     *** node of size 4 ***     
+827c827
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+830c830
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+833c833
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+836c836
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+839c839
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+842c842
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+845c845
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+848c848
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+851c851
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+854c854
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+857c857
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+860c860
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+863c863
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+866c866
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+869c869
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+872c872
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+875c875
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+878c878
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+881c881
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+884c884
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+887c887
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+890c890
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+893c893
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+896c896
+<     *** node of size 4 ***
+---
+>     *** node of size 4 ***     
+901c901
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+904c904
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+907c907
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+910c910
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+913c913
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+916c916
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+919c919
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+922c922
+<     *** node of size 4 ***
+---
+>     *** node of size 4 ***     
+927c927
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+930c930
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+933c933
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+936c936
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+939c939
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+942c942
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+945c945
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+948c948
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+951c951
+<     *** node of size 4 ***
+---
+>     *** node of size 4 ***     
+956c956
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+959c959
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+962c962
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+965c965
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+968c968
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+971c971
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+974c974
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+977c977
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+980c980
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+983c983
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+986c986
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+989c989
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+992c992
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+995c995
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+998c998
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1001c1001
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1004c1004
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1007c1007
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1010c1010
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1013c1013
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1016c1016
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1019c1019
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1022c1022
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1025c1025
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1028c1028
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1031c1031
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1034c1034
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1037c1037
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1040c1040
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1043c1043
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1046c1046
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1049c1049
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1052c1052
+<     *** node of size 3 ***
+---
+>     *** node of size 3 ***     
+1056c1056
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1059c1059
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1062c1062
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1065c1065
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1068c1068
+<     *** node of size 4 ***
+---
+>     *** node of size 4 ***     
+1073c1073
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1076c1076
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1079c1079
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1082c1082
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1085c1085
+<     *** node of size 3 ***
+---
+>     *** node of size 3 ***     
+1089c1089
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1092c1092
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1095c1095
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1098c1098
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1101c1101
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1104c1104
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1107c1107
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1110c1110
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1113c1113
+<     *** node of size 4 ***
+---
+>     *** node of size 4 ***     
+1118c1118
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1121c1121
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1124c1124
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1127c1127
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1130c1130
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1133c1133
+<     *** node of size 3 ***
+---
+>     *** node of size 3 ***     
+1137c1137
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1140c1140
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1143c1143
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1146c1146
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1149c1149
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1152c1152
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1155c1155
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1158c1158
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1161c1161
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1164c1164
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1167c1167
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1170c1170
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1173c1173
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+1176c1176
+<     *** node of size 2 ***
+---
+>     *** node of size 2 ***     
+]0;hirani_zn@cobra:~/algs/Prog3[hirani_zn@cobra Prog3]$ exit
+exit
+
+Script done on 2025-04-30 20:07:20-04:00

@@ -1,0 +1,347 @@
+#include "file.h"
+#include<iostream>
+#include<fstream>
+#include<sys/stat.h>
+#include<cstdlib>
+#include<cstring>
+#include<vector>
+#include<sstream>
+#include<iomanip>
+#include<sys/types.h>
+#include<unistd.h>
+
+using namespace std;
+
+void processCommand(int argc, char* argv[]);
+void createFile(string tarFilename, vector<string> & files);
+void listFiles(string tarFilename);
+void extractFiles(string tarFilename);
+void listAll(string & filename, vector<string> &files);
+void archiveFile(ofstream & tarFile, string & file);
+void storeFile(File & arcFile, ofstream & tarFile, string & file, string & size);
+void retrieveDir(string & fileName);
+void retrieveFile(ifstream & tarFile, string & fileName, long fileSize);
+void printHelp();
+bool isDir(string filename);
+string getFileProtectionMode(const struct stat& buf);
+string getFileSize(const struct stat& buf);
+string getFileTimestamp(const struct stat& buf);
+
+int main(int argc, char* argv[])
+{
+	// check if user entered valid commands
+	if (argc < 2)
+        {
+                cout << "Try `jtar --help' for more information.\n";
+                return 1;
+        }
+	
+	// process the command user entered and run program
+	processCommand(argc, argv);
+
+        return 0;
+}
+
+void processCommand(int argc, char* argv[])
+{
+	//Pre: Valid number of commands have been sent through command line
+	//Post: runs the command
+	
+	string command = argv[1];	
+	string tarFilename = (argc >= 3) ? argv[2] : ""; 	// get tar file name if 3 or more arguments
+	
+	if (command == "-cf" && argc >= 4)
+        {
+                vector<string> files;			// create a vector to hold filenames
+                for (int i = 3; i < argc; i++)		// start from the 4th argument and get all the filenames to store in the array of files
+                {
+                        files.push_back(argv[i]);
+                }
+
+                for (string file : files)		// iterate through each file sent from command line
+                {       if (isDir(file))		// if the file is a directory, list all the files inside the directory to store in the files vector
+                        {
+                                listAll(file, files);
+                        }
+                }
+                createFile(tarFilename, files);		// create the tarfile
+        }
+        else if (command == "-tf" && argc == 3)
+        {	
+               listFiles(tarFilename);			// lists all the files to terminal
+        }
+        else if (command == "-xf" && argc == 3)
+        {
+               extractFiles(tarFilename);		// extracts all files from the tarfile
+        }
+        else if (command == "--help")
+        {
+                printHelp();				// prints help menu
+        }
+        else
+        {
+                cout << "Try `jtar --help' for more information.\n";	// invalid command
+                return;
+        }
+}
+
+void listAll(string & filename, vector<string> &files)
+{
+	// Pre: file and directories sent to be archived have been stored in array of files
+	// Post: gets all files and directories from a directory
+	// Source for fgets and popen: https://www.geeksforgeeks.org/fgets-function-in-c/
+
+	string command = "ls " + filename;		// construct system command to read filename
+        FILE* process = popen(command.c_str(), "r");	// use popen for to run system command and read input
+
+        char buffer[200];		// declare buffer to read list of files
+        while (fgets(buffer, sizeof(buffer), process) != NULL)	// read list of files
+        {
+                string line = (string) buffer;	// convert buffer to string
+
+                line = line.substr(0, line.length() - 1);	// remove \n 
+
+                string newFile = filename + "/" + line;		// build whole filepath
+
+                files.push_back(newFile);		// push the file into array of files
+
+                if (isDir(newFile))			// recursively call program if file is directory
+                        listAll(newFile, files);
+               
+        }
+        pclose(process);	// close process
+}
+
+void createFile(string tarFilename, vector<string> & files)
+{
+	// Pre: all files are in files array
+	// Post: creates tar file
+	
+        ofstream tarFile(tarFilename, ios::binary);	// open the tarfile to write to in binary
+        if (!tarFile)
+        {
+                cout << "Unable to create a tar file\n";	// error if unable to open tar file
+                return;
+        }
+
+        int numFiles = files.size();	// get number of files in files array	
+
+        tarFile.write((char *) & numFiles, sizeof(numFiles));	// write the number of files at the top of tar file
+
+        for (string file : files)	// for all files in the file array
+        {
+                archiveFile(tarFile, file);	// store file with its contents in tar file
+        }
+
+        tarFile.close();	// close the tar file
+}
+
+void archiveFile(ofstream & tarFile, string & file)
+{
+	// Pre: tar file has been opened for writing too and fileSize has been stored at top
+	// Post: file metadata and contents are stored in tar file
+	
+        struct stat buf;	// buffer to hold file data
+        if (lstat(file.c_str(), &buf) != 0)	// retrieve file data or print error message
+        {
+                cout << "Cannot access data of file: " << file << endl;
+                return;
+        }
+
+        string mode = getFileProtectionMode(buf);	// get file protection mode
+        string size = getFileSize(buf);			// get file size
+        string timeStamp = getFileTimestamp(buf);	// get file time stamp
+
+        File arcFile(file.c_str(), mode.c_str(), size.c_str(), timeStamp.c_str());	// create the file to archieve
+	
+        if (S_ISDIR(buf.st_mode))	// if file is a directory, flag it as a directory and store it in tar file
+        {
+                arcFile.flagAsDir();
+                tarFile.write((char *) & arcFile, sizeof(arcFile));
+        }
+        else				// if file is a regular file, store it in tar file followed by its contents
+        {
+                storeFile(arcFile, tarFile, file, size);
+        }
+
+}
+
+void storeFile(File & arcFile, ofstream & tarFile, string & file, string & size)
+{
+	// Pre: File object is created with a metadata and it is checked to be a regular file
+	// Post: File data and contents are stored in tar file
+	
+        ifstream inputFile(file.c_str(), ios::binary);		// open the file to read contents
+
+        if (inputFile)		// if file successfully opened:
+        {
+                tarFile.write((char*)&arcFile, sizeof(arcFile));	// write the File object into the tar file
+
+                long fileSize = stol(size);		// get file size
+
+                char* fileContent = new char[fileSize];	// make a buffer to read in all file content
+	
+                inputFile.read(fileContent, fileSize);	// read in file content
+
+                tarFile.write(fileContent, fileSize);	// write it to the tarfile
+
+                inputFile.close();		// close the file
+         }
+         else		// if file cannot be opened print error message
+         {
+                cout << "Cannot open file " << file << endl;
+         }
+
+}
+
+void listFiles(string tarFilename)
+{ 
+	//Pre: user entered command to list all files
+	//Post: lists all files in tar file to terminal
+	
+        ifstream tarFile(tarFilename, ios::binary);	// open tar file for reading
+        if (!tarFile)	// if unable to open tar file, print error message
+        {
+                cout << "Cannot open tar file " <<  endl;
+                return;
+        }
+
+        int numFiles;	
+        tarFile.read((char *)&numFiles, sizeof(numFiles));	// read number of files from top of tar file
+
+        for (int i = 0; i < numFiles; i++)	// iterate through all files in tar file
+        {
+                File arcFile;	
+                tarFile.read((char *)&arcFile, sizeof(arcFile));	// read archived file from tar file
+
+                cout << arcFile.getName() << endl;	// print the files name
+
+                if (!arcFile.isADir())	// if the file is a regular file
+                {
+                        long fileSize = stol(arcFile.getSize());	// get the file's size
+                        tarFile.seekg(fileSize, ios::cur);		// skip over the file's contents
+                }
+        }
+
+        tarFile.close();	// close tarfile
+}
+
+void extractFiles(string tarFilename)
+{
+	// Pre: user has entered command to extract all files from tarfile
+	// Post: files extracted with protection modes and timestamps
+	
+        ifstream tarFile(tarFilename, ios::binary);	// open tar file for reading
+        if (!tarFile)		// if cannot open tar file print error message
+        {
+                cout << "Unable to open tar file " << endl;
+                return;
+        }
+
+        int numFiles;
+        tarFile.read((char *)&numFiles, sizeof(numFiles));	// read number of files from top of tar file
+
+        for (int i = 0; i < numFiles; i++)	// go through each file in archive
+        {
+                File arcFile;			
+                tarFile.read((char *)&arcFile, sizeof(arcFile));	// read in a file object from tar file
+
+                string fileName = arcFile.getName();			// get file's name
+                long fileSize = stol(arcFile.getSize());		// get file's size
+		string chmd = "chmod " + arcFile.getPmode() + " " + fileName;		// command to change protection mode to original
+		string touch = "touch -t " + arcFile.getStamp() + " " + fileName;	// command to restore time to original
+		
+                if (arcFile.isADir())			// if file is a directory then create the directory
+			retrieveDir(fileName);
+                else					// if file is a regular file then create file with its contents
+			retrieveFile(tarFile, fileName, fileSize);
+              
+		system(chmd.c_str());		// restore the protection mode
+		system(touch.c_str());		// restore the time stamp
+        }
+        tarFile.close();
+}
+
+void retrieveFile(ifstream & tarFile, string & fileName, long fileSize)
+{
+	// Pre: file data has been read in from tar file and file is a regular file
+	// Post: creates file with its contents
+	
+	ofstream outputFile(fileName);	// open output file for writing
+        if (outputFile)
+        {
+        	char *fileContent = new char[fileSize];		// declare buffer to hold file content
+                tarFile.read(fileContent, fileSize);		// read filecontent in from tar file
+                outputFile.write(fileContent, fileSize);	// write the filecontent to the output file
+                outputFile.close();				// close the output file
+        }
+       	else
+        {
+        	cout << "Cannot create file " << fileName << endl;	// error message for unable to create the output file
+        }
+}
+
+void retrieveDir(string & fileName)
+{
+	// Pre: file data has been read in from tar file and file is a directory
+	// Post: create the directory
+	
+	ifstream temp(fileName.c_str());	// try to open directory to see if it already exists
+
+        if (!temp)	// if it does not exist create it using system command
+        {
+        	string mkdirCmd = "mkdir " + fileName;
+        	system(mkdirCmd.c_str());
+        }
+}
+
+void printHelp()
+{
+	// Pre: user has entered --help command
+	// Post: Prints help menu
+	
+        cout << "`jtar' saves many files together into a single tape or disk archive, and\n";
+        cout << "can restore individual files from the archive.\n\n";
+        cout << "Usage: tar [OPTION]... [FILE]...\n\n";
+        cout << "Option Examples:\n";
+        cout << "tar -cf archive.tar foo bar  # Create archive.tar from files foo and bar.\n";
+        cout << "tar -tf archive.tar          # List all files in archive.tar verbosely.\n";
+        cout << "tar -xf archive.tar          # Extract all files from archive.tar.\n";
+        cout << "Report bugs to <digh_ad@mercer.edu>.\n";
+}
+
+bool isDir(string filename)
+{
+        struct stat buf;	// declare buf to hold file data
+
+        lstat (filename.c_str(), &buf);		// retrieve file dat
+
+        return S_ISDIR(buf.st_mode);	// return boolean for if file is a directory or not
+}
+
+string getFileProtectionMode(const struct stat& buf)
+{
+        stringstream pmode;	// create a stringstream to hold protectionmode
+	
+	// get protection mode and start with "0" to store as 4 bytes
+        pmode << "0"			
+              << ((buf.st_mode & S_IRWXU) >> 6)
+              << ((buf.st_mode & S_IRWXG) >> 3)
+              << (buf.st_mode & S_IRWXO);
+
+        return pmode.str();	// return protection mode
+}
+
+string getFileSize(const struct stat& buf)
+{
+        return to_string(buf.st_size);  // return size of file
+}
+
+string getFileTimestamp(const struct stat& buf)
+{
+        char stamp[16]; 	// declare a char array to hold 16 chars for the entire time stamp
+
+        strftime(stamp, sizeof(stamp), "%Y%m%d%H%M.%S", localtime(&buf.st_ctime)); 	// get the time the file was created
+
+        return string(stamp);   // return the timestamp
+}
