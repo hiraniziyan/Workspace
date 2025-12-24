@@ -1,0 +1,34 @@
+Create a program that stores employees in a database by:
+
+1) displayCommands for the user to add/download/upload/search/etc... employees
+2) runDatabase by prompting user for command and going through switch statement to execute commands on 3-9
+3) addEmployee by asking user for employee info and storing and sorting it in arraylist
+	- bubble sorting algorithm used for sorting
+4) raiseWage which increases pay by percentage
+	-uses increaseWage method of Employee class
+5) computePayChecks which asks for hours worked and computed pay based on that
+	-uses get and computePay methods of HourlyEmployee and SalariedEmployee clases
+6) printRecords of employee based on a certain location
+	-uses get and toString methods of the Hourly and SalariedEmployee classes
+7) downloadData downloads all employee information for each employee currently in arrayList and stores it in a Binary file
+   named Employee.dat
+8) uploadData which prints out all of the records of the employees which were previously uploaded in the binary file
+9) searchList which searches for particular employee using binary search and prints out records
+
+classes
+Parent class - Employee
+ - contains constructor with name and wage to be used for child classes
+ - contains getters and setters for name and wage 
+ - increase wage method to increase pay by percent
+ - abstract computPay method and formatting methods for child classes
+
+HourlyEmployee class extends Employee
+- contains contructor which accesses parent contructor for name and wage
+- fills out computePay and gives bonus for extra hours
+- contains toString
+
+SalariedEmployee class extends Employee
+- contains constructor which sends in name and salary/40/52
+- contains getters and setters for salary
+- computePay which always returns 1/52 * salary regardless of hours worked
+- contains toString

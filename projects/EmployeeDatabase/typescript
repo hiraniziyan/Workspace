@@ -1,0 +1,546 @@
+Script started on Thu 04 Apr 2024 12:07:29 PM EDT
+]0;hirani_zn@cobra:~/Prog3[?1034h[hirani_zn@cobra Prog3]$ at[K[Kcat Personnel.java
+import java.util.*;
+import java.io.*;
+
+public class Personnel{
+	//declare Scanner and employee arrayList
+	private static Scanner input = new Scanner(System.in);
+	private static ArrayList<Employee> employeeList = new ArrayList<>();
+
+	//handles enter for scanner
+	private static String enter;
+
+	public static void main(String[] args) {
+		//runs the program
+		runDatabase();
+	}
+
+	private static void displayCommands() {
+		//Pre: the database is open 
+		//Post: shows user all commands
+		System.out.println("-----------------------------------");
+		System.out.println("|Command: n - New employee        |");
+		System.out.println("|         c - Compute paychecks   |");
+		System.out.println("|         r - Raise wages         |");
+		System.out.println("|         p - Print records       |");
+		System.out.println("|         s - Search for employee |");
+		System.out.println("|         d - Download data       |");
+		System.out.println("|         u - Upload data         |");
+		System.out.println("|         q - Quit                |");
+		System.out.println("-----------------------------------");		
+	}
+
+	private static void runDatabase() {
+		//Pre: ArrayList has been declared
+		//Post: User has inputted and dowloaded/uploaded Employees to their database
+		char command = 0;
+
+		//loop that goes until user has inputted q-quit
+		do {	
+			//display all commands
+			displayCommands();
+		
+			//prompt user to enter command
+			System.out.print("Enter command: ");	
+			command = input.nextLine().charAt(0);
+			
+			//execute command using switch statement
+			switch(command) {
+			case 'n':
+			case 'N': addEmployee();
+			break;
+			case 'c':
+			case 'C': computePayChecks();
+			break;
+			case 'r':
+			case 'R': raiseWage();
+			break;
+			case 'p':
+			case 'P': 
+				for(int location = 0; location < employeeList.size(); location++){
+					printRecord(location);
+				}
+				break;
+			case 'd':
+			case 'D': downloadData();
+			break;
+			case 'u':
+			case 'U': uploadData();
+			break;
+			case 's':
+			case 'S': searchList();
+			break;
+			case 'q':
+			case 'Q': System.exit(0);
+			break;
+			default : System.out.println("Command was not recognized; please try again.");
+			}
+		} while (command != 'q');
+
+	}
+
+	private static void addEmployee() {
+		//Pre: User has inputted N/n for new Employee
+		//Post: New employee with name/employeeType/pay has been added and sorted in the database
+
+		//prompt user for name of Employee
+		System.out.print("Enter name of new employee: ");
+		String name = input.nextLine();
+		
+		//loop that goes until user has inputted valid employeeType
+		char employeeType = '0';
+		do {
+			//prompt user to enter if employee is paid hourly or is salaried
+			System.out.print("Hourly (h) or salaried (s): ");
+			employeeType = input.nextLine().charAt(0);
+
+			//if type s, make user enter annual salary and add employee to arrayList
+			if (employeeType == 's' || employeeType == 'S') {
+				System.out.print("Enter annual salary: ");
+				double salary = input.nextDouble();
+				enter = input.nextLine();
+				Employee employee = new SalariedEmployee(name, salary);
+				employeeList.add(employee);
+				break;
+			}
+			
+			//if type h, make user enter wage and add employee to arrayList
+			else if (employeeType == 'h' || employeeType == 'H') {
+				System.out.print("Enter hourly wage: ");
+				double wage = input.nextDouble();
+				enter = input.nextLine();
+				Employee employee = new HourlyEmployee(name, wage);
+				employeeList.add(employee);
+				break;
+			}
+			
+			//error message for employeeType invalid
+			else {
+				System.out.println("Input was not h or s; please try again.");
+			}
+		}while (employeeType != 'h' || employeeType != 'H' || employeeType != 's' || employeeType != 'S');
+
+		//sorts the employee in the arrayList
+		sortList();
+
+
+	}
+
+	private static void computePayChecks() {
+		//Pre: Employees are in the arrayList and user has entered command C/c
+		//Post: computes the employee's payCheck based on the hours worked
+
+		//loop to go through arrayList
+		for (int i = 0; i < employeeList.size(); i++) {
+			//prompt user for hours worked
+			System.out.print("Enter number of hours worked by " + employeeList.get(i).getName() + ": ");
+			int hours = input.nextInt();
+			enter = input.nextLine();
+
+			//print pay
+			System.out.printf("Pay: $%.2f\n", employeeList.get(i).computePay(hours));
+
+		}
+	}
+
+
+	private static void raiseWage() {
+		//Pre: Employees have been added to arrayList and user has inputted the command r/R
+		//Post: increases the employee's wage/salary and print the information out
+		
+		//Promt user to enter a percerntage increase
+		System.out.print("Enter percentage increase: ");
+		double percent = input.nextDouble();
+		enter = input.nextLine();
+		
+		//go through the employee ArrayList increases salary/wage by inputted percent
+		for (int i = 0; i < employeeList.size(); i++) {
+			employeeList.get(i).increaseWage(percent);
+			printRecord(i);
+		}
+
+	}
+
+	private static void printRecord(int location) {
+		//Pre: Employee location in the arraylist has been passed
+		//Post: the employees information is printed
+		System.out.println(employeeList.get(location).toString());
+	}
+
+	private static void downloadData() {
+		//Pre: Employees have been added to arrayList
+		//Post: the information gets sent to a binary file for the next time the program is run
+		System.out.println("Downloading data...");
+		for(int location = 0; location < employeeList.size(); location++){
+			printRecord(location);
+		}
+		String fileName = "Employee.dat";
+		try {
+			FileOutputStream fileOut = new FileOutputStream(fileName);
+			ObjectOutputStream out = new ObjectOutputStream(fileOut);
+			out.writeObject(employeeList);
+			out.close();
+		}
+		catch (IOException e) {
+			System.out.println(e.getMessage());
+		}
+	}
+
+
+	@SuppressWarnings("unchecked")
+	private static void uploadData() {
+		//Pre: employee(s) have been added to arrayList and downloaded into binary file
+		//Post: prints the current records of the employees in the database
+		String fileName = "Employee.dat";
+		try {
+			FileInputStream fileIn = new FileInputStream(fileName);
+			ObjectInputStream in = new ObjectInputStream(fileIn);
+			employeeList = (ArrayList<Employee>) in.readObject();
+			in.close();
+		}
+		catch (IOException e) {
+			System.out.println(e.getMessage());
+		}
+		catch (ClassNotFoundException e)
+		{
+			System.out.println(e.getMessage());
+		}
+		for (int i = 0; i < employeeList.size(); i++)
+			System.out.println(employeeList.get(i));
+
+	}
+	
+	private static void sortList() {
+		//Pre: employee has been added to array List
+		//Post: employee has been sorted in the arrayList by a bubble sort algorithm
+		int currentMinIndex;
+		Employee temp;
+		for (int i = 0; i < employeeList.size()-1; i++) {
+			currentMinIndex = i;
+			for (int j = currentMinIndex + 1; j < employeeList.size(); j++) {
+			if (employeeList.get(currentMinIndex).getName().compareTo(employeeList.get(j).getName()) > 0) {
+					currentMinIndex = j;
+				}
+			}
+			if (currentMinIndex != i) {
+				temp = employeeList.get(i);
+				employeeList.set(i, employeeList.get(currentMinIndex));
+				employeeList.set(currentMinIndex, temp);
+			}
+		}
+	}
+
+	private static void searchList() {
+		//Pre: Employee ArrayList has been sorted
+		//Post: returns the information of employee user has searched for using binary search algorithm
+
+		//ask user for employee name
+		System.out.print("Enter employee name: ");
+		String name = input.nextLine();
+
+		//binary search
+		int first = 0, last = employeeList.size()-1, middle, location;
+		boolean found = false;
+		do
+		{
+			middle = (first + last) / 2;
+			if (name.equals(employeeList.get(middle).getName()))
+				found = true;
+			else if (name.compareTo(employeeList.get(middle).getName()) < 0)
+				last = middle - 1;
+			else
+				first = middle + 1;
+		} while ( (! found) && (first <= last) );
+		location = middle;
+
+		if (location == -1) {
+			System.out.println("Employee not found...");
+		}
+		else {
+			printRecord(location);
+		}
+
+	}
+
+}
+
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ cat Sa[K[KEmployee.aj[K[Kjava
+import java.io.Serializable;
+
+@SuppressWarnings("serial")
+abstract class Employee implements Serializable {
+	//private instance variables
+	private String name;
+	private double wage;
+	
+	//Employee constructor
+	protected Employee(String name, double wage){
+		this.name = name;
+		this.wage = wage;
+	}
+
+	//getters and setters for name and wage
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public void setWage(double wage) {
+		this.wage = wage;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public double getWage() {
+		return wage;
+	}
+
+	//increase wage by percent inputted
+	public void increaseWage(double percent) {
+		wage *= 1 + percent/100;
+	}
+	
+	//abstract computePay to be filled out by child classes
+	abstract double computePay(int hours);
+
+	//method for formatting dollars and cents
+	public String toDollars(double amount) {
+		long roundedAmount = Math.round(amount * 100);
+		long dollars = roundedAmount / 100;
+		long cents = roundedAmount % 100;
+
+		if (cents <= 9)
+			return dollars + ".0" + cents;
+		else
+			return dollars + "." + cents;
+	}
+	
+	//methods for formatting spaces in toString methods
+	public String pad(String str, int n) {
+		if (str.length() > n)
+			return str.substring(0, n);
+		while (str.length() < n)
+			str += " ";
+		return str;
+	}
+	
+	public String reversePad(String str, int n) {
+		if (str.length() > n)
+                        return str.substring(0, n);
+                while (str.length() < n)
+                        str = " " + str;
+                return str;
+	}
+}
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ cat S[KHourlyEmployee.java
+import java.io.Serializable;
+
+@SuppressWarnings("serial")
+public class HourlyEmployee extends Employee implements Serializable{
+
+	//constructor for Hourly Employee	
+	public HourlyEmployee(String name, double wage) {
+		super(name,wage);
+	}
+	
+	//compute pay that adds bonus if more hours worked
+	public double computePay(int hours) {
+		return (hours <= 40) ? 
+				hours * getWage() : 
+					40 * getWage() + (hours - 40) * 1.5 * getWage();
+	}
+	
+	//prints information
+	public String toString() {
+		return  pad(getName(),20) + reversePad("$"  + toDollars(getWage()),10) + "/hour";
+	}
+}
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ cat SalariedEmployee.java
+
+import java.io.Serializable;
+
+@SuppressWarnings("serial")
+public class SalariedEmployee extends Employee implements Serializable{
+
+	//contructor for Salaried Employee	
+	public SalariedEmployee(String name, double salary) {
+		super(name,salary/(40*52));
+
+	}
+	
+	//compute pay that returns 1/52 of total salary
+	public double computePay(int hours) {
+		return getWage()*40 ;
+	}
+	
+	//getters and setter for salary
+	public double getSalary() {
+		return getWage() * 40 * 52;
+	}
+	
+	public void setSalary(double newSalary) {
+		double salary = newSalary;
+	}
+	
+	//prints employee record
+	public String toString() {
+		return  pad(getName(),20) + reversePad("$" + toDollars(getSalary()),10) + "/year";
+	}
+	
+
+}
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ javac Personnel.java
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ java Personnel
+-----------------------------------
+|Command: n - New employee        |
+|         c - Compute paychecks   |
+|         r - Raise wages         |
+|         p - Print records       |
+|         s - Search for employee |
+|         d - Download data       |
+|         u - Upload data         |
+|         q - Quit                |
+-----------------------------------
+Enter command: n
+Enter name of new employee: Plumber, p Phil
+Hourly (h) or salaried (s): h
+Enter hourly wage: 40.00
+-----------------------------------
+|Command: n - New employee        |
+|         c - Compute paychecks   |
+|         r - Raise wages         |
+|         p - Print records       |
+|         s - Search for employee |
+|         d - Download data       |
+|         u - Upload data         |
+|         q - Quit                |
+-----------------------------------
+Enter command: n
+Enter name of new employee: Coder, Carol l
+Hourly (h) or salaried (s): s
+Enter annual salary: 80000
+-----------------------------------
+|Command: n - New employee        |
+|         c - Compute paychecks   |
+|         r - Raise wages         |
+|         p - Print records       |
+|         s - Search for employee |
+|         d - Download data       |
+|         u - Upload data         |
+|         q - Quit                |
+-----------------------------------
+Enter command: c
+Enter number of hours worked by Coder, Carol: 50
+Pay: $1538.46
+Enter number of hours worked by Plumber, Phil: 50
+Pay: $2200.00
+-----------------------------------
+|Command: n - New employee        |
+|         c - Compute paychecks   |
+|         r - Raise wages         |
+|         p - Print records       |
+|         s - Search for employee |
+|         d - Download data       |
+|         u - Upload data         |
+|         q - Quit                |
+-----------------------------------
+Enter command: r
+Enter percentage increase: 4.5
+Coder, Carol         $83600.00/year
+Plumber, Phil           $41.80/hour
+-----------------------------------
+|Command: n - New employee        |
+|         c - Compute paychecks   |
+|         r - Raise wages         |
+|         p - Print records       |
+|         s - Search for employee |
+|         d - Download data       |
+|         u - Upload data         |
+|         q - Quit                |
+-----------------------------------
+Enter command: P
+Coder, Carol         $83600.00/year
+Plumber, Phil           $41.80/hour
+-----------------------------------
+|Command: n - New employee        |
+|         c - Compute paychecks   |
+|         r - Raise wages         |
+|         p - Print records       |
+|         s - Search for employee |
+|         d - Download data       |
+|         u - Upload data         |
+|         q - Quit                |
+-----------------------------------
+Enter command: s
+Enter employee name: Plumner   ber, Phil
+Plumber, Phil           $41.80/hour
+-----------------------------------
+|Command: n - New employee        |
+|         c - Compute paychecks   |
+|         r - Raise wages         |
+|         p - Print records       |
+|         s - Search for employee |
+|         d - Download data       |
+|         u - Upload data         |
+|         q - Quit                |
+-----------------------------------
+Enter command: d
+Downloading data...
+Coder, Carol         $83600.00/year
+Plumber, Phil           $41.80/hour
+-----------------------------------
+|Command: n - New employee        |
+|         c - Compute paychecks   |
+|         r - Raise wages         |
+|         p - Print records       |
+|         s - Search for employee |
+|         d - Download data       |
+|         u - Upload data         |
+|         q - Quit                |
+-----------------------------------
+Enter command: u
+Coder, Carol         $83600.00/year
+Plumber, Phil           $41.80/hour
+-----------------------------------
+|Command: n - New employee        |
+|         c - Compute paychecks   |
+|         r - Raise wages         |
+|         p - Print records       |
+|         s - Search for employee |
+|         d - Download data       |
+|         u - Upload data         |
+|         q - Quit                |
+-----------------------------------
+Enter command: q
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ ja[K[K!j
+java Personnel
+-----------------------------------
+|Command: n - New employee        |
+|         c - Compute paychecks   |
+|         r - Raise wages         |
+|         p - Print records       |
+|         s - Search for employee |
+|         d - Download data       |
+|         u - Upload data         |
+|         q - Quit                |
+-----------------------------------
+Enter command: u
+Coder, Carol         $83600.00/year
+Plumber, Phil           $41.80/hour
+-----------------------------------
+|Command: n - New employee        |
+|         c - Compute paychecks   |
+|         r - Raise wages         |
+|         p - Print records       |
+|         s - Search for employee |
+|         d - Download data       |
+|         u - Upload data         |
+|         q - Quit                |
+-----------------------------------
+Enter command: q
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ exit
+exit
+
+Script done on Thu 04 Apr 2024 12:10:28 PM EDT
