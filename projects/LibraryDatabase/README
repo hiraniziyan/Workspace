@@ -1,0 +1,46 @@
+Create a database program which: 
+
+	1) prompts user to choose between a library.dat file and a play.dat file and stores the books in the file into an arrayList and sorts the arrayList by bookTitle
+		-elements in the file are line by line with all attributes of a single book on one line separated by a semi-colon
+		-open method which returns which ever file user has picked
+		-fill method which runs input books method and returns number of books in the file
+			-inputBooks method fills the arrayList with LibraryBook objects by reading in each attrubute of the file until a demilmeter(;)
+			-sort method with sorts the book in alphabetical order by their titles using selection sort. 
+				- if you have an array of 5 integers, the algorithm looks at the first index and goes through the array to find the smallest element. If the current index is 					larger than the smallest element, swap and go to the next index. Goes until the length of array - 1;
+		
+	2) opens an interactive menu where the user can choose to display all books, search for a particular book or a particular attribute in the books, or exit the program
+		- diplayMenu method displays the options and prompts user to pick one and exectues that command
+			-diplayAllBooks method diplays all books one by one until no books or user goes back to menu
+			-searchForBook method runs searchAttribute method and search method and gives error if book is not found
+				-searchAttribute method prompts user to enter how they want to search for the book/books and prompts the user to enter the attribute for that book
+				-search method searches for a keyword or full title/author/copyright year and displays the book and if the user enters a price or genre it diplays all books
+					which fit into particular genre
+					- linear search algorithm looks at each element in array/arrayList and checks if the key declared equals the element in the array/arrayList
+					-isBlank method checks if attribute entered by user is " ", "\n", "\t" so all books will not be printed due to the contains method
+		- printRecord method prints all values for a given book
+
+	clearScreen method clears the entire screen
+
+	sample run:
+		choose file: library.dat
+		//ArrayList is filled with library.dat books and sorted by title
+
+		Would you like to view all books, search for books, or exit: search for books
+		How would you like to search (title, author, copyright year, price, genre): genre
+		What genre: f
+
+		program displays all information for each fiction book one by one until user hits M for menu or no more fiction books
+
+		//goes back to menu when user hits enter
+		Would you like to view all books, search for books, or exit: search for books
+		How would you like to search (title, author, copyright year, price, genre): title
+                What title: Scarlet Letter
+
+		diplayes all attributes for scarlet letter
+		
+		//goes back to menu when user hits enter
+                Would you like to view all books, search for books, or exit: exit
+		Have a nice day
+	end sample run...
+
+				

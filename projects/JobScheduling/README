@@ -1,0 +1,59 @@
+Create a program which stores a set of jobs into a queue, executes them, and calculates each job's time fields
+
+- How the Queue is designed
+	a) implemented as a circular LinkedList with a pointer to the lastNode
+	b) enqueue method- when first element is added, it is linked to itself
+			 - otherwise, add it to the back of the linked list and link it to the front
+	c) dequeue method- if no elements, return error message
+			 - if one element (which would be the lastNode), set it to null and return item it contains
+			 - if multiple elements remove the first element by setting the address which the last node points 
+		           too to one after the first and return the item
+- Job class
+	a) constructor takes in jobName, arrivalTime, and runTime and it stores startTime, waitTime, and turnTime
+	b) contains toString method which prints the Job name and times
+- TimeShare
+	a) contains three queues and a time variable
+	1) inputFile method - takes in a command line argument for file name. The method traverses the information in the
+	                      file one-by-one and stores it in appropriate Job object variables. It adds the job to the input                               Queue and repeats process until all jobs in file have been inputted. Throws exception and aborts                              program if file is not found.
+	2) transferToJobQueue method - 
+           transfers the element from the inputQueue to the jobQueue once arrivalTime for job is reached
+	3) executeCurrentJob - retrieves first job from the jobQueue if queue is not empty, and sets the startTime to the 		                     current time. It loops until time-startTime = runTime and in each iteration it increases the ti                               time and runs the transferToJobQueue method to check for a transfer. After the job is 
+			       completed calculate the wait time by startTime - arrivalTime and calculate turnTime by 
+			       adding waitTime and runTime. Store the Job object with all the previous information added
+			       into the finishedJobs queue.
+	4) averageWaitTime method - clone the finshedJobs queue and dequeue and add waitTimes in a loop. Also keep track of
+				    the number of Jobs and return totalWaitTime/numJobs.
+	5) cpuUsage method - clone the finishedJobs queue and dequeue and add runTimes and return the total runTime.
+	6) print method - prints the header and all job names and times in the finished jobs queue by invoking toString()
+			  of Job class. 
+                          Calculate cpuIdle time = time - 1 - cpuUsage; 
+                                            cpuUsagePercent = (cpuUsage / (cpuUsage + cpuIdle))*100;
+			  Print all the averages using printf();
+
+
+Sample Run:
+File:
+job1    01      02
+job2    02      05
+job3    04      07
+job4    07      02
+job5    11      01
+
+ 
+Output:  
+Job Control Analysis: Summary Report
+
+job id  arrival start   run     wait    turnaround
+        time    time    time    time    time
+------  ------- -----   ----    ----    ----------
+job1    1       1       2       0       2
+job2    2       3       5       1       6
+job3    4       8       7       4       11
+job4    7       15      2       8       10
+job5    11      17      1       6       7
+
+ Average Wait Time => 3.80
+         CPU Usage => 17.00
+          CPU Idle => 0.00
+     CPU Usage (%) => 100.00%
+
