@@ -1,0 +1,459 @@
+Script started on 2024-11-08 23:49:05-05:00
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ cat -n zip.cpp
+     1	#include<iostream>
+     2	#include<fstream>
+     3	#include"huffman.h"
+     4	using namespace std;
+     5	
+     6	int CountLetters (int Letters[], ifstream & file);
+     7	void buildTree (HuffmanTree & tree, const int Letters[]);
+     8	void createEncodedFile(HuffmanTree & tree, const int Letters[], string fileName, int letterCount, ifstream & file);
+     9	void printHelp();
+    10	
+    11	const int NumLetters = 256;
+    12	
+    13	int main(int argc, char* argv[])
+    14	{
+    15		// Check if there is at least 2 words on command line	
+    16		if (argc < 2)
+    17	        {
+    18	                cout << "        Bad Filename Entered On Command Line -- Now Aborting." << endl;
+    19	                return 1;
+    20	        }
+    21		
+    22		string help;		// string for help command
+    23		string fileName;	// string for fileName
+    24		
+    25		// if there are 3 arguments and the second one is --t, set help to --t
+    26		if (argc == 3 && string(argv[1]) == "--t")
+    27		{
+    28			help = argv[1];
+    29			fileName = argv[2];
+    30		}
+    31		else if (string(argv[1]) == "--help")
+    32		{
+    33			printHelp();		// if second parameter is --h print table and exit program
+    34			return 0;
+    35		}
+    36		else if(((string)argv[1]).substr(0,2) != "--")		// check if second argument is a help command
+    37		{
+    38			fileName = argv[1];			// if not then set the fileName to the second argument
+    39		}
+    40		else
+    41		{
+    42			cout << "Unknown Command" << endl;	// exit if unknown command
+    43			return 1;	
+    44		}
+    45		
+    46	        ifstream file(fileName.c_str());        // Open file
+    47	
+    48		// file is not open, produce error message 
+    49		if (!file.is_open())
+    50		{
+    51			cout << "        Bad Filename Entered On Command Line -- Now Aborting." << endl;
+    52	                return 1;
+    53		}
+    54	
+    55		HuffmanTree hTree;	// declare tree
+    56	
+    57		int Letters[NumLetters];	// declare array for character frequencies
+    58		int letterCount = CountLetters(Letters, file);	//count unique letters and store in array with frequencies
+    59		buildTree(hTree, Letters);		// build a huffman tree
+    60		createEncodedFile(hTree, Letters, fileName, letterCount, file);	// create the .zip file with all data in it
+    61		
+    62		//print the table if help == "--t"
+    63		if (help == "--t")
+    64			hTree.PrintTable();
+    65		
+    66		file.close();	// close file
+    67	
+    68		return 0;
+    69	}
+    70	
+    71	int CountLetters (int Letters[], ifstream & file)
+    72	{
+    73		// Pre: file has been input in from command line
+    74		// Post: all characters and frequencies in file have been stored in file
+    75		
+    76	        char ch;
+    77		int count = 0;
+    78		
+    79		// Initialize all values in array to 0
+    80	        for (char ch = char(0);  ch <= char(126);  ch++)
+    81	                Letters[ch] = 0;
+    82	
+    83	        // While there is characters in file keep going
+    84	        while (file.get(ch))
+    85		{
+    86	                Letters[ch] += 1;	// add 1 to where the char appears in array
+    87			if (Letters[ch] == 1)	// if the character == 1 increment unique character count;
+    88				count++;	
+    89	       	}
+    90		return count;
+    91	}
+    92	
+    93	void buildTree (HuffmanTree & tree, const int Letters[])
+    94	{
+    95		// Pre: All characters and frequencies have been stored in array
+    96		// Post: tree is built 
+    97		
+    98	
+    99		// Go through array of characters
+   100		for (char ch = char(0);  ch <= char(126);  ch++)
+   101			if(Letters[ch] != 0)	// if the frequency of the character in the slot is not 0 insert it into tree
+   102				tree.insert(ch, Letters[ch]);
+   103	
+   104		tree.build();	// call build method to build tree
+   105	}
+   106	
+   107	void createEncodedFile(HuffmanTree & tree, const int Letters[], string fileName, int letterCount, ifstream & file)
+   108	{
+   109		// Pre: Tree has been built
+   110		// Post: encoded file created and original file destroyed
+   111		
+   112	
+   113		ofstream newFile(fileName + ".zip");	// create new file with .zip extension
+   114		
+   115		// print error message if file is not open
+   116		if (!newFile.is_open())
+   117	        {
+   118	                cout << "        Unable to Open New File  -- Now Aborting." << endl;
+   119	                exit(1);
+   120	        }
+   121	
+   122		newFile << letterCount << endl;		// put the amount of unique letters on the first line of the file	
+   123	
+   124		// go through character array
+   125		for (char ch = char(0); ch <= char(126);  ch++)
+   126		{
+   127			//if the character was in the file add the ascii value and huffman encoding into the file
+   128			if (Letters[ch] >= 1)
+   129			{
+   130				newFile << int(ch) << " " << tree.GetCode(ch) << endl;
+   131			}
+   132		}
+   133		
+   134		//reset pointer by opening file again
+   135		file.close();
+   136	    	file.open(fileName.c_str());
+   137	
+   138	    	if (!file.is_open())
+   139	    	{
+   140	        	cout << "        Bad Filename Entered On Command Line -- Now Aborting." << endl;
+   141	        	exit(1);
+   142	    	}
+   143	
+   144		string huffmanEncoding = "";
+   145		char ch;
+   146		double chInSource = 0;
+   147		// get the huffman encoding for the entire file
+   148		while (file.get(ch))
+   149		{
+   150			huffmanEncoding += tree.GetCode(ch);
+   151			chInSource++;
+   152		}
+   153		newFile << huffmanEncoding << endl; 	// add the encoding to the last line of the newFile
+   154	
+   155		double compressionRatio = (int) ((1 - (huffmanEncoding.length())/(chInSource * 8)) * 10000) / 100.0; //calculate compression ratio and print
+   156		cout << "File Successfully Compressed To " << huffmanEncoding.length() << " Bits (" << compressionRatio << "% Less)." << endl; 
+   157		newFile.close(); // close new file
+   158		remove(fileName.c_str());
+   159	
+   160	}
+   161	
+   162	void printHelp()
+   163	{
+   164		// Pre: The --help comand has been input
+   165		// Post: Prints the help commands
+   166		
+   167		cout << "Usage: ZIP [OPTION]... [FILE]..." << endl;
+   168		cout << "Compress a text file using Huffman encoding." << endl;
+   169	
+   170	  	cout << "		--t              Display the Huffman encoding table." << endl;
+   171	  	cout << " 		--help           Provide help on command." << endl;
+   172	
+   173	}
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ car [K[Kt huffman.h
+#include <vector>
+#include <string>
+using namespace std;
+
+struct HNode {
+    char ch;
+    int weight;
+    int parent;
+    int childType;
+};
+
+class HuffmanTree {
+    public:
+	HuffmanTree();				// constructor
+
+	void insert(char ch, int weight);	// inserts a character and its associated weight
+						// into a node of the Huffman tree
+
+	bool inTree(char ch);			// returns a boolean value indicating whether
+						// a given character is stored in the tree
+		
+	int GetFrequency(char ch);		// returns the weight of a given character
+
+	
+	void build();				// Builds the Huffman Tree;
+	
+
+	string GetCode(char ch);		// returns the compressed code of a given
+						// character in the tree using recursion
+
+	void PrintTable();			// displays the Huffman encoding table used in
+						// the compression process
+	
+	int numNodes();				// returns the number of nodes currently in Huffman 
+						// tree
+
+    private:
+	vector<HNode> nodes;
+	int numChars;
+	bool built;                             
+	
+	int lookUp(char ch);			// returns the index of a given character in tree
+	int GetFrequency(int i);		// returns the weight at a given index
+	string GetCode(int i);			// returns the compressed code of the character at 
+	void combineNodes(int weight);					// a given index
+	int smallestFrequency();
+};
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ cat huffman.cpp
+#include "huffman.h"
+#include <iostream>
+using namespace std;
+
+HuffmanTree:: HuffmanTree()
+	: numChars(0), built(false) {}
+
+void HuffmanTree:: insert(char ch, int weight) {
+    HNode newNode = {ch, weight, -1, -1}; 
+    built = false;
+    nodes.push_back(newNode);
+    numChars++;
+
+}
+
+bool HuffmanTree:: inTree(char ch) {
+	for (HNode node : nodes)
+		if (node.ch == ch)
+			return true;
+	return false;
+	
+
+}
+
+int HuffmanTree:: GetFrequency(char ch) {
+	return GetFrequency(lookUp(ch));
+}
+
+int HuffmanTree:: GetFrequency(int i) {
+	return nodes[i].weight;
+}
+
+int HuffmanTree:: lookUp(char ch) {
+	int numNodes = nodes.size();
+	int index;
+ 	for (int index = 0; index < numNodes; index++) {
+    		if (nodes[index].ch == ch) {
+        		return index;
+    		}
+	}
+	return -1;
+}
+
+string HuffmanTree:: GetCode(char ch) {
+	return GetCode(lookUp(ch));
+}
+
+
+string HuffmanTree:: GetCode(int i) {
+	if (nodes[i].parent == 0)
+		return "";
+	else
+		return (GetCode(nodes[i].parent) +
+			(char)(nodes[i].childType+'0'));
+
+}
+
+void HuffmanTree::PrintTable() {
+    printf("\t++++ ENCODING TABLE ++++\n\n");
+    printf("Index  Char   Weight  Parent  ChildType\n");
+
+    int i = 0;
+    while(i < numChars) {
+        if (nodes[i].ch != '\0') {
+            if (nodes[i].ch == ' ') {
+                printf("%-6d %-6s %-7d %-7d %-9d\n", i, "sp", nodes[i].weight, nodes[i].parent, nodes[i].childType);
+            } else if (nodes[i].ch == '\n') {
+                printf("%-6d %-6s %-7d %-7d %-9d\n", i, "nl", nodes[i].weight, nodes[i].parent, nodes[i].childType);
+            } else {
+                printf("%-6d %-6c %-7d %-7d %-9d\n", i, nodes[i].ch, nodes[i].weight, nodes[i].parent, nodes[i].childType);
+            }
+        }
+	i++;
+    }
+	for (int j = 1 ; i < numNodes(); i++, j++)
+        {
+		if (nodes[i].childType != -1)
+		{
+                	printf("%-6d %s%-5d %-7d %-7d %-9d\n", i, "T",j, nodes[i].weight, nodes[i].parent, nodes[i].childType);
+		}
+		else
+			 printf("%-6d %s%-5d %-7d %-7d %-9s\n", i, "T",j, nodes[i].weight, nodes[i].parent, "N\\A");
+        }
+
+	
+}
+
+
+int HuffmanTree:: numNodes() {
+
+	return nodes.size();	
+}
+
+void HuffmanTree:: build()
+{
+        int maxNodes = 2 * numChars - 1;
+        int smallestNode1;
+	int smallestNode2;
+
+        while (numNodes() < maxNodes) {
+            smallestNode1 = smallestFrequency();
+            nodes[smallestNode1].parent = numNodes();
+
+            smallestNode2 = smallestFrequency();
+            nodes[smallestNode2].parent = numNodes();
+
+            nodes[smallestNode1].childType = 0;
+            nodes[smallestNode2].childType = 1;
+
+            combineNodes(nodes[smallestNode1].weight + nodes[smallestNode2].weight);
+            built = false;
+        }
+
+        nodes[numNodes() - 1].parent = 0;
+        built = true;
+}
+int HuffmanTree:: smallestFrequency() {
+        int smallestNode = -1;
+        for (int i = 0; i < numNodes(); i++) {
+            if (nodes[i].parent == -1) {
+                if (smallestNode == -1 || nodes[i].weight < nodes[smallestNode].weight) {
+                    smallestNode = i;
+                }
+            }
+        }
+        return smallestNode;
+}
+void HuffmanTree:: combineNodes(int frequency){
+	HNode newNode;
+	newNode.weight = frequency;
+	newNode.parent = -1;
+	newNode.childType = -1;
+	nodes.push_back(newNode);
+}
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ c++ zip.cpp huffman.o
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ mv a.out My[K[KmyZip
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ c++ unzip.cpp
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ ls
+[0m[01;32ma.out[0m  help  huffman.cpp  huffman.h  huffman.h.gch  huffman.o  letters.cpp  [01;32mmyUnzip[0m  [01;32mmyZip[0m  README  [01;31msample1.zip[0m  sample2  [01;31msample2.zip[0m  sample3  sample4  [01;31msample4.zip[0m  sample5  typescript  [01;32mUNZIP[0m  unzip.cpp  [01;32mZIP[0m  zip.cpp
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ my unzip[K[K[K[K[K[K[Kv a.out myUnzip
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ ./a[KmyZip sample2[K[K[K[K[K[K[K[K[K[K[K[K[K[K[Krm sample2.zip
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ rm sample4.zip
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ ./Z[KmyZIP[K[Kip sample2
+File Successfully Compressed To 151 Bits (58.96% Less).
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ ![Kvim sample2.zip
+[?1049h[22;0;0t[?1h=[1;49r[?12h[?12l[27m[23m[29m[m[H[2J[?25l[49;1H"sample2.zip" 14L, 254C[2;1H▽[6n[2;1H  [1;1H[>c]10;?]11;?[1;1H12
+10 00100
+32 01
+65 0011
+69 00101
+73 11110
+83 1100
+84 1101
+97 000
+101 100
+105 11111
+115 1110
+116 101
+0011010011111001111101110011101111111000111001111110101110010000001110010000010101001010001010111110101010011101100011101100000011101000111010110000100
+[1m[34m~                                                                                                                                                                                                                                     [16;1H~                                                                                                                                                                                                                                     [17;1H~                                                                                                                                                                                                                                     [18;1H~                                                                                                                                                                                                                                     [19;1H~                                                                                                                                                                                                                                     [20;1H~                                                                                                                                                                                                                                     [21;1H~                                                                                                                                                                                                                                     [22;1H~                                                                                                                                                                                                                                     [23;1H~                                                                                                                                                                                                                                     [24;1H~                                                                                                                                                                                                                                     [25;1H~                                                                                                                                                                                                                                     [26;1H~                                                                                                                                                                                                                                     [27;1H~                                                                                                                                                                                                                                     [28;1H~                                                                                                                                                                                                                                     [29;1H~                                                                                                                                                                                                                                     [30;1H~                                                                                                                                                                                                                                     [31;1H~                                                                                                                                                                                                                                     [32;1H~                                                                                                                                                                                                                                     [33;1H~                                                                                                                                                                                                                                     [34;1H~                                                                                                                                                                                                                                     [35;1H~                                                                                                                                                                                                                                     [36;1H~                                                                                                                                                                                                                                     [37;1H~                                                                                                                                                                                                                                     [38;1H~                                                                                                                                                                                                                                     [39;1H~                                                                                                                                                                                                                                     [40;1H~                                                                                                                                                                                                                                     [41;1H~                                                                                                                                                                                                                                     [42;1H~                                                                                                                                                                                                                                     [43;1H~                                                                                                                                                                                                                                     [44;1H~                                                                                                                                                                                                                                     [45;1H~                                                                                                                                                                                                                                     [46;1H~                                                                                                                                                                                                                                     [47;1H~                                                                                                                                                                                                                                     [48;1H~                                                                                                                                                                                                                                     [m[49;213H1,1[11CAll[1;1H[?25h[?25l[49;1H[K[49;1H:[?25hw[?25l[?25hq[?25l[?25h[?25l[?2004l"sample2.zip" 14L, 254C written
+[?2004l[?1l>[?25h[?1049l[23;0;0t]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ cat sample2.zip
+12
+10 00100
+32 01
+65 0011
+69 00101
+73 11110
+83 1100
+84 1101
+97 000
+101 100
+105 11111
+115 1110
+116 101
+0011010011111001111101110011101111111000111001111110101110010000001110010000010101001010001010111110101010011101100011101100000011101000111010110000100
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ ./myUnzop[K[Kip sample2.zip
+File Successfully Inflated Back To Original.
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ cat sample2
+A As Is Tie Sit Sea Seat Eat It Ate Tea Taste
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ ./ [KmyZip sample4
+File Successfully Compressed To 45 Bits (59.82% Less).
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ cat sample3[K4.zip
+10
+10 1010
+32 1011
+67 1100
+69 00
+73 1101
+77 1110
+78 011
+82 100
+83 1111
+84 010
+111000100110000100101101000011011110111111010
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ ./[K[Kca[K[K./[K/myUnzip sample4.z[K[K
+	 Bad Filename Entered On Command Line -- Now Aborting.
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ ./myUnzip sample4.zip
+File Successfully Inflated Back To Original.
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ cat sample4
+MERCER TENNIS
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ cat sample4./myUnzip sample4.zip[K[2Pcat sample4.zip./myZip sample4-sample4-sample4tsample4 sample4[C[C[C[C[C[C[C[K5
+File Successfully Compressed To 40 Bits (64.28% Less).
+	++++ ENCODING TABLE ++++
+
+Index  Char   Weight  Parent  ChildType
+0      nl     1       8       0        
+1      sp     1       8       1        
+2      C      3       11      1        
+3      E      3       12      0        
+4      M      1       9       0        
+5      O      1       9       1        
+6      R      3       12      1        
+7      S      1       10      0        
+8      T1     2       10      1        
+9      T2     2       11      0        
+10     T3     3       13      0        
+11     T4     5       13      1        
+12     T5     6       14      0        
+13     T6     8       14      1        
+14     T7     14      0       N\A      
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ ./myZip --t sample5[K[K[K[K[K[K[K[K[Kh
+Unknown Command
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ ./myZip --help
+Usage: ZIP [OPTION]... [FILE]...
+Compress a text file using Huffman encoding.
+		--t              Display the Huffman encoding table.
+ 		--help           Provide help on command.
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ ./myUnzip sample5.zip
+File Successfully Inflated Back To Original.
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ cat sample5
+MERCER SOCCER
+]0;hirani_zn@cobra:~/Prog3[hirani_zn@cobra Prog3]$ exit
+exit
+
+Script done on 2024-11-08 23:54:45-05:00

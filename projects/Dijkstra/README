@@ -1,0 +1,123 @@
+dijkstra.cpp
+	- uses graph, queue, and HashTable classes
+
+methods:
+	void readFile(ifstream & file, Graph<string> & graph, vector<string> & vertices, HashTable<string> & hTable);
+	void QuickSort(vector<string> & vertices, int first, int last);
+	void split(vector<string>& vertices, int first, int last, int& splitPoint);
+	void dijkstra(vector<string> & vertices, Graph<string> & graph, Queue<string> & myQ);
+	void printSummaryTable(string startPt, vector<string> & vertices, Graph<string> & graph, Queue<string> & myQ);
+	int indexOf(vector<string> vertices, string key);
+	void printRow(string vertex, string prev, int distance);
+	bool depthFirstSearchCycle(Graph<string>& graph, vector<string>& vertices, string current, vector<bool>& marked, vector<bool>& inPath, vector<string>& cycle);
+	void findCycle(Graph<string>& graph, vector<string>& vertices);
+	void printCycle(vector<string> cycle);
+
+main:
+	- gets file input by command line
+	- calls readFile:
+		- reads the file line by line and splits both vectors and distance by ';' delimiter. 
+		- stores the vertices in a vector
+		- creates a graph based on these vectors and distance
+	- calls QuickSort:
+		- uses a recursive quicksort method with split to sort the array
+	- calls dijkstra
+		- gets starting vertex from user and calls printSummaryTable:
+			- prints the summary table from the start vertex 
+			- gets each unmarked vertex with smallest distance
+			- update its adjacent vertex's distances if needed
+		
+	- calls findCycle
+		- uses a recursive DPS method to check if a cycle exists and recieve the cycle
+		- prints the cycle out using printCycle
+
+other methods:
+	- depthFirstSearch
+		- base case: current vertex already marked
+		- recursive: not marked
+		- look at adjacent vertices and check for cycle recursively
+		- if cycle is found stop
+	- printCycle
+		- receives a vector with a cycle in it
+		- because the start of the cycle may not be the start of the vertex
+		- find the start by checking if the current vertex is the last vertex in the array
+		- print the cycle
+	- indexOf
+		- returns index of key in the array of vectors
+	
+
+
+                  V1                  V2                  V3
+                  V4                  V5                  V6
+                  V7
+
+        Please input your starting vertex: V1
+        ------------------------------------------------------------------
+
+                Vertex       Mark        Distance              Previous
+
+                    V1        T0             0                   N/A
+                    V2         F             2                   V1
+                    V3         F           INF                   N/A
+                    V4        T1             1                   V1
+                    V5         F           INF                   N/A
+                    V6         F           INF                   N/A
+                    V7         F           INF                   N/A
+        ------------------------------------------------------------------
+
+
+	------------------------------------------------------------------
+
+                Vertex       Mark        Distance              Previous
+
+                    V1        T0             0                   N/A
+                    V2        T2             2                   V1
+                    V3         F             3                   V4
+                    V4        T1             1                   V1
+                    V5        T3             3                   V4
+                    V6         F             9                   V4
+                    V7         F             5                   V4
+        ------------------------------------------------------------------
+
+	------------------------------------------------------------------
+
+                Vertex       Mark        Distance              Previous
+
+                    V1        T0             0                   N/A
+                    V2        T2             2                   V1
+                    V3        T3             3                   V4
+                    V4        T1             1                   V1
+                    V5        T4             3                   V4
+                    V6         F             9                   V4
+                    V7        T5             5                   V4
+        ------------------------------------------------------------------
+
+	------------------------------------------------------------------
+
+                Vertex       Mark        Distance              Previous
+
+                    V1        T0             0                   N/A
+                    V2        T2             2                   V1
+                    V3        T3             3                   V4
+                    V4        T1             1                   V1
+                    V5        T4             3                   V4
+                    V6        T6             6                   V7
+                    V7        T5             5                   V4
+        ------------------------------------------------------------------
+
+
+
+
+	adjacency matrix:
+
+	   V1 V2 V3 V4 V5 V6 V7
+	V1 0  2  0  1  0  0  0
+	V2 0  0  3  0  10 0  0
+	V3 4  0  0  0  0  5  0
+	V4 0  0  2  0  2  8  4
+	V5 0  0  0  0  0  0  6
+	V6 0  0  0  0  0  0  0 
+	V7 1  0  0  0  0  0  0
+
+
+

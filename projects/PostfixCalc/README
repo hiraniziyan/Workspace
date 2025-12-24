@@ -1,0 +1,76 @@
+GOAL: this program acts a a postfix calculator which can solve mathematical problems entered in the postfix order of a binary expression tree
+
+input-output: All input must be in postfix order, and the commands for output show the information stored in the top slot of the stack, or the entire stack
+
+The stack.h file contains the declarations for all objects, constructors, and  methods in the stack.cpp class.
+public:
+	Stack() - a stack contructor with capacity 30 as a parameter
+	
+	methods:
+	bool isEmpty() const, bool isFull() const, Object & top(), void makeEmpty(), void pop(), void push(), Object topAndPop();
+
+private: 
+	theArray - vector/array of objects
+	topOfStack - int datafield for location of top in Array
+
+dsexceptions.h - gives declarations to errors
+	UnderFlow{}
+	OverFlow{}
+	DivisionByZero{}
+	DataError{}
+
+stack.cpp implements the constructors and methods in the stack class 		//the class uses templates so the stack can be any object type
+	- Stack(int capacity) : theArray(capacity) --- constructor for the stack; intiializes the topOfStack to -1;
+	- bool isEmpty() const --- returns a true if stack is empty by checking if topOfStack is -1, else returns false
+	- bool isFull() const --- returns a true if stack is full by checking if topOfStack is size of the array - 1, else return false
+	- void makeEmpty() --- makes the stack empty by setting the topOfStack to -1
+	- top() const --- if stack is empty it throws and underflow error, else it returns the value most recently inserted and stack remains unchanged
+	- pop() --- if stack is empty it throws and underflow error, else it removes most recently inserted item and makes topOfStack point to the slot before the deleted top
+	- push (const Object & x) --- inserts x into stack and makes topOfStack point at that slot if stack is not full, otherwise throw an overflow error
+	- topAndPop() --- if stack is empty it throws and underflow error, else returns the value at the topOfStack and deletes it from stack 
+
+client program dc.cpp
+	- main method --- declares a stack of integers and takes in user input in an infinite while loop until user ends program
+	- runCalculator() --- takes in the stack and input line as parameters
+		- goes through the entire string one character at a time 
+
+		-if the character is a digit or underscore(signifies a negative), keep going until the next character is not a digit and append the character onto a string
+		-convert the string of digits to an integer using atoi() and pushes it into a stack (if the string has a '_' at index 0, take a substring to remove the '_' and multiply the value by -1)
+		-if the stack if full this is in a try-catch block, so it will give an overflow message
+
+		-if the character is not a digit, send it through to the check command method
+	- checkCommand() --- takes in stack parameter and char parameter sent in from runCalculator method;
+		-checks the command in a switch statement
+		' ' -> skip over empty space
+		'p' -> print the top of stack using top() method; new line is printed after
+		'n' -> prints and pops the top using the topAndPop() method; does not print new line
+		'c' -> clears stack using the makeEmpty() method; 
+		'f' -> calls the printStack() method
+			-printStack() takes in stack parameter which is not pass by reference so it copies the stack;
+				-goes through a while loop and prints and pops the top until stack is empty using topAndPop(); new line is printed after each value
+		'r' -> calls reverse() method
+			-reverse() takes in stack parameter
+			-gets the top two numbers using topAndPop() and pushes them back in but in reverse order
+		'd' -> duplicates the top of the stack by pushes the top back onto top using push() and top()
+		'+', '-', *', '/', '%'-> calls methods add, subtract, multiply, divide, and remainder respectively
+			- these methods take in stack as a parameter and get the top two integers in the stack and pops them using topAndPop()
+			- then it adds, subtracts, multiplies, divides, or gets the remainder of the two numbers respectively and pushes value onto stack using push()
+			- the order of the arithmetic (second top, operation, top) // this is important in subtration, division, and remainder calculation
+			- the divide and remainder methods contain a try-catch which throws a divisionByZero error in case division by zero occurs and the stacks remain unchanged
+		'!' -> calls factorial method
+			- gets the top value and pops it using topAndPop()
+			- if the top is negative, give error message
+			- else if it is zero, push 1 onto stack
+			- else declare a variable to store the result and use a for loop with variable i which iterates until i <= top of stack and multiply the result by i at each iteration.
+			- pushes result to top of stack using push()
+		'^' -> calls power method
+			-takes the top two values of the stack and pops them using topAndPop (the first is the exponent and second is the base)
+			-does not support negative powers, so it shows error message if exponent is negative
+			-raises base to the exponent power by using pow() and pushes it onto stack using push()
+			- the order of the arithmetic (second top, operation, top) 
+		default -> throws DataException if the character does not match any commands
+	- the switch statement is in a try-catch block which catches DataException, OverFlow, and UnderFlow.
+
+	- after one command is run it goes back to the runCalculator method for next command until end of input
+	- the program goes back to the main method to repeat all steps until the user hits ctrl-d to end program.
+	

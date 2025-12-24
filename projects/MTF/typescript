@@ -1,0 +1,980 @@
+Script started on 2024-09-18 12:14:02-04:00
+]0;hirani_zn@cobra:~/Project1[hirani_zn@cobra Project1]$ cat MoveFront.cpp
+#include<iostream>
+#include"dlist.h"
+using namespace std;
+
+void PrintMenu(char &sel);
+void HeadInsert(DList<int>& list);
+void TailInsert(DList<int>& list);
+void AccessItem(DList<int>& list);
+void FindAndMove(DList<int>& list, int item);
+void Delete(DList<int>& list);
+void PrintList(DList<int>& list);
+void PrintLength(DList<int>& list);
+void SortList(DList<int>& list);
+void changeValue(DList<int>& list);
+
+int main()
+{
+	//declare list
+	DList<int> list;
+	char sel;	
+	
+	//repeat until user quits program		
+	do
+	{
+		//prints menu and asks for option
+		PrintMenu (sel);
+		
+		//options
+		switch (toupper(sel))
+		{
+			case 'H' : HeadInsert(list); break;
+			case 'T' : TailInsert(list); break;
+			case 'E' : list.makeEmpty(); break;
+			case 'A' : AccessItem(list); break;
+			case 'D' : Delete(list); break;
+			case 'P' : PrintList(list); break;
+			case 'L' : PrintLength(list); break;
+			case 'S' : SortList(list); break;
+			case 'C' : changeValue(list); break;
+			case 'Q' : cout << "\tExiting Program...\n"; break;
+			default : cout << "\tError. Try Again." << endl;
+		}
+	} while (toupper(sel) != 'Q');
+}
+
+void PrintMenu(char &sel)
+{
+	//Post: print menu and takes in user input for option
+	cout << endl;
+	cout << "|-----------------------------|" << endl;
+	cout << "|------------Menu-------------|" << endl;
+	cout << "|-----------------------------|" << endl;
+	cout << "|                             |" << endl;
+	cout << "| H: Insert item at front     |" << endl;
+	cout << "| T: Insert item at back      |" << endl;
+	cout << "| A: Access an item in list   |" << endl;
+	cout << "| D: Delete an item in list   |" << endl;
+	cout << "| P: Print the list           |" << endl;
+	cout << "| L: Print the list's length  |" << endl;
+	cout << "| S: Sort items in the list   |" << endl;
+	cout << "| C: Change Value of an item  |" << endl;
+	cout << "| Q: Quit the program         |" << endl;
+	cout << "|                             |" << endl;
+	cout << "|-----------------------------|" << endl;
+	cout << "|                             |" << endl;
+	cout << "| Please enter your choice:   |" << endl;
+	cin >> sel;
+}
+void HeadInsert(DList<int>& list)
+{
+	//Pre: user has selected to H
+	//Post: adds an item to beginning of the list
+	
+	//get user input for item to be added
+	int item;
+	cout << "\vItem to be Inserted Onto Head of List?" << endl;
+	cin >> item;
+
+	//if item is not already in list add it to front otherwise print duplicate message
+	if(!list.inList(item))
+	{
+		list.insertHead(item);
+		cout << "Done" << "\n\n";
+	}	
+	else
+		cout << "Item Already Exists in List.  No Duplicates Allowed. \n\n";
+	cin.ignore(80, '\n');
+}
+
+void TailInsert(DList<int>& list)
+{
+	//Pre: user has selected T
+	//Post: item recieved is added to back of the list
+	
+	//take user input for item
+	int item;
+	cout << "\vWhat number would you like to insert at the end of the list?" << endl;
+	cin >> item;
+	
+	//if item is not in list add to back of list else print duplicate message
+	if(!list.inList(item))
+	{
+                list.appendTail(item);
+		cout << "Done" << "\n\n";
+	}
+        else
+                cout << "Item Already Exists in List.  No Duplicates Allowed. \n\n";
+        cin.ignore(80, '\n');
+
+}
+
+void AccessItem(DList<int>& list)
+{
+	//Pre: user has selected A
+	//Post: item moved to front if it is in list
+	
+	//if list is empty print message indicating empty list
+	if(list.isEmpty())
+		cout << "\vThe list is empty. A number must be inserted before it can be accessed." << endl;
+	
+	else
+	{
+		//get user input for item to be searched
+		int item;
+		cout << "\vEnter a Number : ";
+		cin >> item;
+
+		//Find and move item to the front
+		FindAndMove(list, item);
+	}
+}
+
+void FindAndMove(DList<int>& list, int item)
+{
+	//Pre: user has sent in item to be searched
+	//Post: item moved to front if it is in list
+	
+	//if item is in list delete the item from current position and move it in front
+	if(list.inList(item)) 
+	{
+		list.deleteItem(item);
+		list.insertHead(item);
+		cout << "Item found and successfully moved to the front!" << endl;
+	}
+	//item not in list
+	else
+		cout << "Item not in list" << endl;	
+        
+}
+
+void Delete(DList<int>& list)
+{
+	//Pre: user has selected D 
+	//Post: item taken from user input is deleted
+	
+	//display message if list is empty
+	if(list.isEmpty())
+		cout << "\vThe list is empty. You must insert a value before anything can be deleted." << endl;
+
+	else
+	{
+		//get user input for item to be deleted
+		int num;
+		cout << "\vWhat number in the list would you like to delete?" << endl;
+		cin >> num;
+		
+		//if item is not in list, print message
+		if(!list.inList(num))
+			cout << "\vThis number is not in the list";
+		
+		//delete item
+		else
+			list.deleteItem(num);
+		cout << endl;
+	}	
+
+}
+
+void PrintList(DList<int>& list)
+{	
+	//Pre: user has selected P
+	//Post: list is printed if not empty
+	
+	//display message if list is empty
+	if(list.isEmpty())
+		cout <<"\vThe list is empty. A number must be inserted before it can be printed." << endl;
+	
+	//print list using .print() method
+	else
+	{
+		cout << "\vPrinting list..." << endl;
+		list.print();
+	}
+}
+
+void PrintLength(DList<int>& list)
+{
+	//Pre: User has selected L
+	//Post: Length of the list is printed
+	
+	cout <<"\vThe length of the list is " << list.lengthIs() << endl << endl;
+}
+
+void SortList(DList<int>& list)
+{
+	//Pre: User has selected S
+	//Post: List is sorted from least to greatest
+	
+	//display message if list is empty
+	if(list.isEmpty())
+		cout << "\vThe list is empty. A number must be inserted before it can be sorted." << endl;
+
+	//sort list using sort() method
+	else
+	{
+		list.sort();
+		cout << "\vItems have been succesfully sorted from least to greatest!" << endl;
+	}
+}
+
+void changeValue(DList<int>& list)
+{
+	//Pre: User has selected C
+	//Post: Value user wants to change has been changed to a new value
+	
+	if(list.isEmpty())
+		cout << "\vThe list is empty. No values to be altered." << endl;
+	//get user input for value to be changed an new value
+	else
+	{
+		int num1;
+		int num2;
+		cout << "\vValue to be changed: ";
+		cin >> num1;
+		cout << "New Value: ";
+		cin >> num2;
+
+		if(list.inList(num2))
+			cout << "New Value already exists within list therefore cannot be added." << endl;
+	
+		//rewrite the old value with new value
+		else
+			list.rewrite(num1,num2);
+	}
+}
+]0;hirani_zn@cobra:~/Project1[hirani_zn@cobra Project1]$ car [K[Kt dlist.h
+
+using namespace std;
+
+template <class ItemType>
+struct NodeType;
+
+template <class ItemType>
+class DList 
+{
+public :
+    DList ();		// Constructor
+    ~DList   ();  	// Destructor	
+
+    // Public Operations
+    void makeEmpty (); 
+    void deleteItem (ItemType item);
+    bool inList (ItemType item) const;	
+    bool isEmpty () const;  
+    void print() const; 
+    void insertHead (ItemType item); 
+    void appendTail (ItemType item); 
+    int lengthIs() const;
+    void sort();
+    void rewrite(ItemType item1, ItemType item2);
+
+private :
+    // Private Attributes of a DList Object 
+    NodeType<ItemType>* head;
+    int length;
+
+    // Functions Called Solely By Public Functions, Not The Client 
+    NodeType<ItemType>* location(ItemType item) const;
+    NodeType<ItemType>* last() const; 
+    void deleteLocation (NodeType<ItemType>* delPtr);
+};
+
+#include "dlist.cpp"
+]0;hirani_zn@cobra:~/Project1[hirani_zn@cobra Project1]$ cat sli[K[K[Kdlist.cpp
+#include <cstddef> 
+#include <iostream>
+using namespace std;
+
+template<class ItemType>
+struct NodeType
+{
+	ItemType info;
+	NodeType<ItemType>*	next;
+	NodeType<ItemType>*	back;
+};
+
+template <class ItemType>		
+DList<ItemType>::DList()		// Class constructor
+{
+    length = 0;
+    head = NULL;
+}
+
+template <class ItemType>
+DList<ItemType>::~DList   ()		
+{
+	// Post: List is empty; All items have been deallocated.
+	makeEmpty(); 
+}
+
+template <class ItemType>
+void DList<ItemType>::makeEmpty()
+{
+        // Post: List is empty; all items have been deallocated.
+
+	NodeType<ItemType>* currentPtr = head;
+
+	while(head != NULL) 
+	{
+		currentPtr = head;
+		head = head -> next;
+
+		delete currentPtr;
+		currentPtr = NULL; 
+	}
+	length = 0;
+
+}
+
+template <class ItemType>
+void DList<ItemType>::deleteItem (ItemType item)	
+{
+	//  Pre :  item to be deleted is passed in via parameter 
+        // Post :  item is deleted if it exists in list
+	if (inList(item))
+        	deleteLocation(location(item));
+}
+
+template <class ItemType>
+bool DList<ItemType>::inList (ItemType item) const
+{
+	//  Pre :  item to be located is passed in via parameter 
+        // Post :  function returns bool value if item is found 
+
+	if (head == NULL) 	
+                return false;
+	
+	NodeType<ItemType>* locPtr = head;
+        while(locPtr != NULL)	     
+        {
+        	if (locPtr -> info == item)	
+                	return true;
+
+		locPtr = locPtr -> next;         
+        }
+        return false;	
+
+}
+
+template <class ItemType>
+bool DList<ItemType>::isEmpty() const		
+{
+	// Post : function returns true if list is empty, false otherwise
+	return (head == NULL);
+	
+}
+
+template <class ItemType>
+void DList<ItemType>::print() const	
+{
+	// Pre  : List is not empty 
+	// Post : Items in List have been printed to screen
+
+        NodeType<ItemType>* locPtr = head;	
+	
+	for (int i = 1; i <= length; i++) 	
+        {
+              	cout << i << ":     " << locPtr -> info << endl;
+                locPtr = locPtr -> next;
+        }
+	cout << "End of List" << endl;
+
+}
+	
+template <class ItemType>
+void DList<ItemType>::insertHead(ItemType item)	
+{
+	//  Pre : item to be inserted is passed in via parameter
+        // Post : item is inserted at head of list;  Former first node is 
+        //        linked back to this new one via double link;
+        //        Length incremented;  Special case handled if list is empty
+
+        NodeType<ItemType>* newNode = new NodeType<ItemType>;
+	newNode -> info = item;
+	newNode -> back = NULL;
+
+	if(head == NULL)
+	{
+		head = newNode;
+		newNode -> next = NULL;
+	}
+	else
+	{
+		newNode -> next = head;
+		head -> back = newNode;
+		head = newNode;
+	}
+	
+	
+	length++;	
+}
+	
+
+template <class ItemType>
+void DList<ItemType>::appendTail(ItemType item)
+{
+	//  Pre :  item to be inserted is passed in via parameter
+        // Post :  item is added to tail of list; Former last node
+        //         is linked to this new one via double link
+        
+        NodeType<ItemType>* newNode = new NodeType<ItemType>;
+	newNode -> info = item;
+	newNode -> next = NULL;
+	
+	if(head == NULL)
+	{
+		head = newNode;
+		newNode -> back = NULL;
+	}	
+	
+	else
+	{
+		newNode -> back = last();
+		newNode -> back -> next = newNode;
+	}
+
+	
+	length++;
+
+}
+
+template <class ItemType>
+int DList<ItemType>::lengthIs() const	
+{
+	// Post : Function returns current length of list 
+	return length;
+}
+
+template <class ItemType>
+NodeType<ItemType>* DList<ItemType>::location(ItemType item) const	
+{
+	//  Pre : item to be located is passed in via parameter 
+        // Post : function returns address of item being searched for --
+        //        if not found, NULL is returned
+	
+	if (head == NULL)	
+		return NULL;
+	
+	NodeType<ItemType>* locPtr = head;
+	while(locPtr != NULL)
+	{
+		if (locPtr -> info == item)
+			return locPtr;
+		else
+			locPtr = locPtr -> next;
+	}
+
+	
+	return NULL;	
+}
+
+template <class ItemType>
+NodeType<ItemType>* DList<ItemType>::last() const	
+{
+	// Post : Function returns location of current last item in list
+	
+	
+	if (head == NULL)	
+                return NULL;
+
+	NodeType<ItemType>* lastNode = head;
+        while(lastNode -> next != NULL)
+		lastNode = lastNode -> next;
+
+        return lastNode; 
+
+	
+}
+
+template <class ItemType>
+void DList<ItemType>::deleteLocation (NodeType<ItemType>* delPtr)	
+{
+
+	//  Pre : Item to be deleted exits in list and its location
+        //        is passed in via parameter
+                   
+	// Post : Location passed in is removed from list;  Length
+        //        is decremented, and location is deallocated 
+
+        // Special Cases Handled for Deleting Only One Item in List,
+        // The Head Item of List, and the Tail Item of List
+        if (length == 1) 
+		head = NULL;
+	
+	else if (delPtr == head)	
+	{
+		head = head -> next;
+		head -> back = NULL;
+	}
+	
+	else if (delPtr -> next == NULL)
+		delPtr -> back -> next = NULL;
+	else						
+	{
+		delPtr -> back -> next = delPtr -> next;
+		delPtr -> next -> back = delPtr -> back;
+	}
+	
+	delete delPtr;		
+	delPtr = NULL;
+	length--;	
+
+
+}
+
+template <class ItemType>
+void DList<ItemType>::sort() 
+{
+	//Pre: list is initialized
+	//Post: list is sorted from least to greatest using bubble sort
+	
+	NodeType<ItemType>* currLoc;	   
+	
+	for(int i = 0; i < length; i++) 	
+	{	
+		currLoc = head -> next; 	
+
+		while (currLoc != NULL)  	
+		{
+			if (currLoc -> back -> info > currLoc -> info) 	    
+			{
+				ItemType temp = currLoc -> info;
+				currLoc -> info = currLoc -> back -> info;
+				currLoc -> back -> info = temp;
+			}
+			currLoc = currLoc -> next; 	
+		}
+		
+	}
+
+}
+
+template <class ItemType>
+void DList<ItemType>::rewrite(ItemType item1, ItemType item2)
+{
+	//Pre: List is initialized
+	//Post: item2 stored in node because item2
+	location(item1) -> info = item2;
+
+}
+]0;hirani_zn@cobra:~/Project1[hirani_zn@cobra Project1]$ c++ MoveFront.cpp
+]0;hirani_zn@cobra:~/Project1[hirani_zn@cobra Project1]$ ./MoveFront[K[K[K[K[K[K[K[K[Ka.out
+
+|-----------------------------|
+|------------Menu-------------|
+|-----------------------------|
+|                             |
+| H: Insert item at front     |
+| T: Insert item at back      |
+| A: Access an item in list   |
+| D: Delete an item in list   |
+| P: Print the list           |
+| L: Print the list's length  |
+| S: Sort items in the list   |
+| C: Change Value of an item  |
+| Q: Quit the program         |
+|                             |
+|-----------------------------|
+|                             |
+| Please enter your choice:   |
+h
+Item to be Inserted Onto Head of List?
+5
+Done
+
+
+|-----------------------------|
+|------------Menu-------------|
+|-----------------------------|
+|                             |
+| H: Insert item at front     |
+| T: Insert item at back      |
+| A: Access an item in list   |
+| D: Delete an item in list   |
+| P: Print the list           |
+| L: Print the list's length  |
+| S: Sort items in the list   |
+| C: Change Value of an item  |
+| Q: Quit the program         |
+|                             |
+|-----------------------------|
+|                             |
+| Please enter your choice:   |
+t
+What number would you like to insert at the end of the list?
+-2
+Done
+
+
+|-----------------------------|
+|------------Menu-------------|
+|-----------------------------|
+|                             |
+| H: Insert item at front     |
+| T: Insert item at back      |
+| A: Access an item in list   |
+| D: Delete an item in list   |
+| P: Print the list           |
+| L: Print the list's length  |
+| S: Sort items in the list   |
+| C: Change Value of an item  |
+| Q: Quit the program         |
+|                             |
+|-----------------------------|
+|                             |
+| Please enter your choice:   |
+h
+Item to be Inserted Onto Head of List?
+438
+Done
+
+
+|-----------------------------|
+|------------Menu-------------|
+|-----------------------------|
+|                             |
+| H: Insert item at front     |
+| T: Insert item at back      |
+| A: Access an item in list   |
+| D: Delete an item in list   |
+| P: Print the list           |
+| L: Print the list's length  |
+| S: Sort items in the list   |
+| C: Change Value of an item  |
+| Q: Quit the program         |
+|                             |
+|-----------------------------|
+|                             |
+| Please enter your choice:   |
+t
+What number would you like to insert at the end of the list?
+2994
+Done
+
+
+|-----------------------------|
+|------------Menu-------------|
+|-----------------------------|
+|                             |
+| H: Insert item at front     |
+| T: Insert item at back      |
+| A: Access an item in list   |
+| D: Delete an item in list   |
+| P: Print the list           |
+| L: Print the list's length  |
+| S: Sort items in the list   |
+| C: Change Value of an item  |
+| Q: Quit the program         |
+|                             |
+|-----------------------------|
+|                             |
+| Please enter your choice:   |
+p
+Printing list...
+1:     438
+2:     5
+3:     -2
+4:     2994
+End of List
+
+|-----------------------------|
+|------------Menu-------------|
+|-----------------------------|
+|                             |
+| H: Insert item at front     |
+| T: Insert item at back      |
+| A: Access an item in list   |
+| D: Delete an item in list   |
+| P: Print the list           |
+| L: Print the list's length  |
+| S: Sort items in the list   |
+| C: Change Value of an item  |
+| Q: Quit the program         |
+|                             |
+|-----------------------------|
+|                             |
+| Please enter your choice:   |
+a
+Enter a Number : -2
+Item found and successfully moved to the front!
+
+|-----------------------------|
+|------------Menu-------------|
+|-----------------------------|
+|                             |
+| H: Insert item at front     |
+| T: Insert item at back      |
+| A: Access an item in list   |
+| D: Delete an item in list   |
+| P: Print the list           |
+| L: Print the list's length  |
+| S: Sort items in the list   |
+| C: Change Value of an item  |
+| Q: Quit the program         |
+|                             |
+|-----------------------------|
+|                             |
+| Please enter your choice:   |
+p
+Printing list...
+1:     -2
+2:     438
+3:     5
+4:     2994
+End of List
+
+|-----------------------------|
+|------------Menu-------------|
+|-----------------------------|
+|                             |
+| H: Insert item at front     |
+| T: Insert item at back      |
+| A: Access an item in list   |
+| D: Delete an item in list   |
+| P: Print the list           |
+| L: Print the list's length  |
+| S: Sort items in the list   |
+| C: Change Value of an item  |
+| Q: Quit the program         |
+|                             |
+|-----------------------------|
+|                             |
+| Please enter your choice:   |
+h
+Item to be Inserted Onto Head of List?
+5
+Item Already Exists in List.  No Duplicates Allowed. 
+
+
+|-----------------------------|
+|------------Menu-------------|
+|-----------------------------|
+|                             |
+| H: Insert item at front     |
+| T: Insert item at back      |
+| A: Access an item in list   |
+| D: Delete an item in list   |
+| P: Print the list           |
+| L: Print the list's length  |
+| S: Sort items in the list   |
+| C: Change Value of an item  |
+| Q: Quit the program         |
+|                             |
+|-----------------------------|
+|                             |
+| Please enter your choice:   |
+p d
+What number in the list would you like to delete?
+5
+
+
+|-----------------------------|
+|------------Menu-------------|
+|-----------------------------|
+|                             |
+| H: Insert item at front     |
+| T: Insert item at back      |
+| A: Access an item in list   |
+| D: Delete an item in list   |
+| P: Print the list           |
+| L: Print the list's length  |
+| S: Sort items in the list   |
+| C: Change Value of an item  |
+| Q: Quit the program         |
+|                             |
+|-----------------------------|
+|                             |
+| Please enter your choice:   |
+p
+Printing list...
+1:     -2
+2:     438
+3:     2994
+End of List
+
+|-----------------------------|
+|------------Menu-------------|
+|-----------------------------|
+|                             |
+| H: Insert item at front     |
+| T: Insert item at back      |
+| A: Access an item in list   |
+| D: Delete an item in list   |
+| P: Print the list           |
+| L: Print the list's length  |
+| S: Sort items in the list   |
+| C: Change Value of an item  |
+| Q: Quit the program         |
+|                             |
+|-----------------------------|
+|                             |
+| Please enter your choice:   |
+h
+Item to be Inserted Onto Head of List?
+5
+Done
+
+
+|-----------------------------|
+|------------Menu-------------|
+|-----------------------------|
+|                             |
+| H: Insert item at front     |
+| T: Insert item at back      |
+| A: Access an item in list   |
+| D: Delete an item in list   |
+| P: Print the list           |
+| L: Print the list's length  |
+| S: Sort items in the list   |
+| C: Change Value of an item  |
+| Q: Quit the program         |
+|                             |
+|-----------------------------|
+|                             |
+| Please enter your choice:   |
+p
+Printing list...
+1:     5
+2:     -2
+3:     438
+4:     2994
+End of List
+
+|-----------------------------|
+|------------Menu-------------|
+|-----------------------------|
+|                             |
+| H: Insert item at front     |
+| T: Insert item at back      |
+| A: Access an item in list   |
+| D: Delete an item in list   |
+| P: Print the list           |
+| L: Print the list's length  |
+| S: Sort items in the list   |
+| C: Change Value of an item  |
+| Q: Quit the program         |
+|                             |
+|-----------------------------|
+|                             |
+| Please enter your choice:   |
+l
+The length of the list is 4
+
+
+|-----------------------------|
+|------------Menu-------------|
+|-----------------------------|
+|                             |
+| H: Insert item at front     |
+| T: Insert item at back      |
+| A: Access an item in list   |
+| D: Delete an item in list   |
+| P: Print the list           |
+| L: Print the list's length  |
+| S: Sort items in the list   |
+| C: Change Value of an item  |
+| Q: Quit the program         |
+|                             |
+|-----------------------------|
+|                             |
+| Please enter your choice:   |
+s
+Items have been succesfully sorted from least to greatest!
+
+|-----------------------------|
+|------------Menu-------------|
+|-----------------------------|
+|                             |
+| H: Insert item at front     |
+| T: Insert item at back      |
+| A: Access an item in list   |
+| D: Delete an item in list   |
+| P: Print the list           |
+| L: Print the list's length  |
+| S: Sort items in the list   |
+| C: Change Value of an item  |
+| Q: Quit the program         |
+|                             |
+|-----------------------------|
+|                             |
+| Please enter your choice:   |
+p
+Printing list...
+1:     -2
+2:     5
+3:     438
+4:     2994
+End of List
+
+|-----------------------------|
+|------------Menu-------------|
+|-----------------------------|
+|                             |
+| H: Insert item at front     |
+| T: Insert item at back      |
+| A: Access an item in list   |
+| D: Delete an item in list   |
+| P: Print the list           |
+| L: Print the list's length  |
+| S: Sort items in the list   |
+| C: Change Value of an item  |
+| Q: Quit the program         |
+|                             |
+|-----------------------------|
+|                             |
+| Please enter your choice:   |
+c
+Value to be changed: 2994
+New Value: 0
+
+|-----------------------------|
+|------------Menu-------------|
+|-----------------------------|
+|                             |
+| H: Insert item at front     |
+| T: Insert item at back      |
+| A: Access an item in list   |
+| D: Delete an item in list   |
+| P: Print the list           |
+| L: Print the list's length  |
+| S: Sort items in the list   |
+| C: Change Value of an item  |
+| Q: Quit the program         |
+|                             |
+|-----------------------------|
+|                             |
+| Please enter your choice:   |
+p
+Printing list...
+1:     -2
+2:     5
+3:     438
+4:     0
+End of List
+
+|-----------------------------|
+|------------Menu-------------|
+|-----------------------------|
+|                             |
+| H: Insert item at front     |
+| T: Insert item at back      |
+| A: Access an item in list   |
+| D: Delete an item in list   |
+| P: Print the list           |
+| L: Print the list's length  |
+| S: Sort items in the list   |
+| C: Change Value of an item  |
+| Q: Quit the program         |
+|                             |
+|-----------------------------|
+|                             |
+| Please enter your choice:   |
+1 q
+	Exiting Program...
+]0;hirani_zn@cobra:~/Project1[hirani_zn@cobra Project1]$ exit
+exit
+
+Script done on 2024-09-18 12:15:45-04:00

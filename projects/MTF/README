@@ -1,0 +1,37 @@
+DList.cpp
+- contains a struct NodeType with pointers to the location of the next and back nodes, and it has an info  field which is the item being stored in the node.
+- contains a constructor for the dlist with length 0 and makes the head node NULL.
+- contains a destructor method along with other methods to manipulate the double linked list
+	- makeEmpty(): goes through the list deallocating every node and sets the pointer to NULL;
+	- deleteItem(): checks of item is in list and calls the location() method to find the item's location, and it also calls the deleteLocation() method on that location to delete the item from the list
+	- location(): goes to the location of the item passed in as a parameter by going through the linked list one node at a time and checking the info contained.
+	- deleteLocation() : deletes the location that is passed as a parameter;handles all cases: only one node in list, delete the head node, delete the tail node, or delete a node in between. Decrements length of list
+	- inList() : searched for item passed in as a parameter in the list and returns a boolean value whether it is found or not.
+	- isEmpty : returns a boolean value for whether list is empty or not
+	- print() : goes through the linked list printing one item at a time
+	- insertHead() : creates a new Node and puts it at front of the list, handles case if there is no nodes. Increases length of list
+	- appendTail() : creates a new Node and puts it at end of the list, handles case if there is no nodes. Increases length of list
+	- lengthIs() : returns the length of the list
+	- last() : goes through the list with temporary node and stops when the next location is null to retrieve the last node in the list. returns location of last node
+	- sort(): sorts the list in ascending order using bubble sort
+	- rewrite() : takes in two items as parameters and replaces the first with the second by finding the location of the first and changing the info field to the second item.
+
+
+MoveToTheFront Algorithm : Items searched tend to be searched again often, so this algorithm moves the searched item to the front of a double-linked list in order to provide for faster searches.
+
+MoveFront.cpp
+-declares a DList of type int
+-Prints a menu
+-asks for user input for a list of commands 
+-runs a switch statement to execute the commands
+
+methods: 
+	HeadInsert: asks for item to be inserted and if it is not in the list it calls the insertHead() method of the dlist class to create a node at the front of the linked list containing the item. Displays message if item is already in list or list is empty
+	TailInsert: asks for item to be inserted and if it is not in the list it calls the appendTail() method of the dlist class to create a node at the back of the linked list containing the item.  Displays message if item is already in list or list is empty
+	AccessItem: asks user for an item to search and calls the FindAndMoveMethod. Gives message if list is empty.
+	FindAndMove: checks if item is in list and deletes the item from the current location and adds it to the front of the list via: deleteItem() and insertHead(). Displays message if item is not in list.
+	Delete: asks for item to delete, and if the item is in list, use the deleteItem() method to delete it. Displays message if list is empty or item is not in list
+	PrintList: prints the list. Gives message if list is empty.
+	PrintLength: prints the length of the list via isLength()
+	SortList: sorts the list from least to greatest using the sort() method. Prints out message if list is empty.	
+	ChangeValue: asks user to input item to replace and new item and replaces them using the rewrite() method if new item is not already in the list. Displays message if list is empty or if new item inputted is already in list.
