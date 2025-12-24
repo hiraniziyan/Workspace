@@ -1,0 +1,32 @@
+[gd_scene load_steps=3 format=3 uid="uid://bndxtgm35apgy"]
+
+[ext_resource type="Script" uid="uid://cdfnivn7wa4m2" path="res://Minigames/DinoBallGame_fixed/Scripts/main.gd" id="1_4dawf"]
+[ext_resource type="PackedScene" uid="uid://b5g6sv5nc2itw" path="res://Minigames/DinoBallGame_fixed/Scenes/Dino.tscn" id="2_6a2n5"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_4dawf")
+
+[node name="Dino" parent="." instance=ExtResource("2_6a2n5")]
+position = Vector2(47, 270)
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="ScoreLabel" type="Label" parent="CanvasLayer"]
+visible = false
+offset_left = 16.0
+offset_top = 16.0
+theme_override_font_sizes/font_size = 24
+text = "0"
+
+[node name="GameOverLabel" type="Label" parent="CanvasLayer"]
+visible = false
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.2
+anchor_right = 0.5
+anchor_bottom = 0.2
+offset_left = -180.0
+text = "Game Over
+Press Space or Click to Restart"
+horizontal_alignment = 1
+vertical_alignment = 1

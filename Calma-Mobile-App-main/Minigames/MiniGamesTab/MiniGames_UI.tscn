@@ -1,0 +1,71 @@
+[gd_scene load_steps=5 format=3 uid="uid://dndcbb1dk4ru6"]
+
+[ext_resource type="Texture2D" uid="uid://b52sg84qmmqh6" path="res://Minigames/MiniGamesTab/Sprites/b6491a79-3d09-42da-b3ec-36f25ce7c7c0.png" id="1_67d1g"]
+[ext_resource type="Script" uid="uid://bboxjhr66tn84" path="res://Minigames/MiniGamesTab/ColorSwitchbutton.gd" id="2_flxow"]
+[ext_resource type="Texture2D" uid="uid://bh0hpsykv8osp" path="res://Minigames/MiniGamesTab/Sprites/defaaef3-d976-4770-81f7-71ecc76f1b7a.png" id="2_pn44r"]
+[ext_resource type="Script" uid="uid://caaq16ps53h54" path="res://Minigames/MiniGamesTab/Dinobutton.gd" id="4_q67uq"]
+
+[node name="MiniGamesUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 0
+offset_right = 180.0
+offset_bottom = 400.0
+color = Color(0.43137255, 0.7882353, 1, 1)
+
+[node name="ColorSwitchButton" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 38.0
+offset_bottom = -239.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Button" type="Button" parent="ColorSwitchButton"]
+custom_minimum_size = Vector2(180, 107)
+layout_mode = 2
+text = "
+
+
+
+Color Switch"
+icon = ExtResource("2_pn44r")
+icon_alignment = 1
+expand_icon = true
+script = ExtResource("2_flxow")
+
+[node name="DinoGameButton" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 170.0
+offset_bottom = -61.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Button" type="Button" parent="DinoGameButton"]
+custom_minimum_size = Vector2(180, 107)
+layout_mode = 2
+text = "
+
+
+
+
+
+Dino Game"
+icon = ExtResource("1_67d1g")
+icon_alignment = 1
+expand_icon = true
+script = ExtResource("4_q67uq")
+
+[connection signal="button_down" from="ColorSwitchButton/Button" to="ColorSwitchButton/Button" method="switchScene"]
+[connection signal="button_down" from="DinoGameButton/Button" to="DinoGameButton/Button" method="switchScene"]

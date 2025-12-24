@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3 uid="uid://b5g6sv5nc2itw"]
+
+[ext_resource type="Script" uid="uid://bjo1utmda2nv5" path="res://Minigames/DinoBallGame_fixed/Scripts/dino.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://b72rflavtyf1v" path="res://Minigames/DinoBallGame_fixed/Sprite/DINOSPRITE.png" id="2_n1lo4"]
+
+[sub_resource type="CircleShape2D" id="1"]
+radius = 20.0
+
+[node name="Dino" type="CharacterBody2D"]
+position = Vector2(-200, 240)
+script = ExtResource("1")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("1")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.2, 0.2)
+texture = ExtResource("2_n1lo4")
+region_rect = Rect2(20, 20, 20, 20)

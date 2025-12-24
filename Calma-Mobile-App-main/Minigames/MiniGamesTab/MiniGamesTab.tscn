@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3 uid="uid://cto1gxf4sk04s"]
+
+[ext_resource type="PackedScene" uid="uid://dndcbb1dk4ru6" path="res://Minigames/MiniGamesTab/MiniGames_UI.tscn" id="1_v5rof"]
+
+[node name="MiniGamesTab" type="Node2D"]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="MiniGamesUI" parent="CanvasLayer" instance=ExtResource("1_v5rof")]
+
+[node name="ActiveScene" type="Node" parent="."]
